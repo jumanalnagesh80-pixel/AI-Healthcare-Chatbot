@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescriptions - AI Healthcare Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard" id="prescriptions-page">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>🏥 HealthCare AI</h3>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="/dashboard">📊 Dashboard</a></li>
+                <li><a href="/appointments">📅 Appointments</a></li>
+                <li><a href="/prescriptions" class="active">💊 Prescriptions</a></li>
+                <li><a href="/vital-signs">❤️ Vital Signs</a></li>
+                <li><a href="/lab-reports">🔬 Lab Reports</a></li>
+                <li><a href="/chat">💬 AI Chat</a></li>
+                <li><a href="/profile">👤 Profile</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <div>
+                    <h1>💊 My Prescriptions</h1>
+                    <p>View and manage your medications</p>
+                </div>
+                <button class="btn btn-primary" onclick="navigateTo('/chat')">🤖 Ask About Medications</button>
+            </div>
+            
+            <!-- Filters -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 200px; margin: 0;">
+                        <input type="text" id="search-prescriptions" class="form-input" placeholder="Search medications...">
+                    </div>
+                    <div class="form-group" style="min-width: 150px; margin: 0;">
+                        <select class="form-select" id="filter-prescription-status">
+                            <option value="">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Refill Required">Refill Required</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary">🔍 Search</button>
+                </div>
+            </div>
+            
+            <!-- Prescriptions Grid -->
+            <div id="prescriptions-container" class="grid grid-2">
+                <div class="card" style="text-align: center; padding: 3rem;">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p style="margin-top: 1rem;">Loading prescriptions...</p>
+                </div>
+            </div>
+            
+            <!-- Medication Reminders -->
+            <div class="card" style="margin-top: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h2 style="color: white;">⏰ Medication Reminders</h2>
+                <p style="color: rgba(255,255,255,0.9);">Set up reminders to never miss your medications</p>
+                <button class="btn btn-outline" style="margin-top: 1rem; background: white; color: var(--primary-color); border: none;">Configure Reminders</button>
+            </div>
+            
+            <!-- Prescription Info -->
+            <div class="grid grid-3" style="margin-top: 2rem;">
+                <div class="card">
+                    <h4>📋 How to Take Medications</h4>
+                    <ul style="color: var(--text-secondary); line-height: 2;">
+                        <li>Follow dosage instructions carefully</li>
+                        <li>Take at the same time each day</li>
+                        <li>Don't skip doses</li>
+                        <li>Complete the full course</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h4>⚠️ Important Notes</h4>
+                    <ul style="color: var(--text-secondary); line-height: 2;">
+                        <li>Check expiration dates</li>
+                        <li>Store properly</li>
+                        <li>Report side effects</li>
+                        <li>Consult before stopping</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h4>🔄 Refill Process</h4>
+                    <ul style="color: var(--text-secondary); line-height: 2;">
+                        <li>Request 7 days before running out</li>
+                        <li>Check with your pharmacy</li>
+                        <li>Keep track of refills</li>
+                        <li>Contact doctor if needed</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

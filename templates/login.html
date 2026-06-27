@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AI Healthcare Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h2>🏥 AI Healthcare Chatbot</h2>
+                <p>Your Personal Health Assistant</p>
+            </div>
+            
+            <div class="login-tabs">
+                <button class="login-tab active" data-tab="login" onclick="switchTab('login')">Login</button>
+                <button class="login-tab" data-tab="register" onclick="switchTab('register')">Register</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="login-form" class="login-form active">
+                <div class="form-group">
+                    <label class="form-label" for="login-username">Username</label>
+                    <input type="text" id="login-username" name="username" class="form-input" placeholder="Enter your username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" class="form-input" placeholder="Enter your password" required>
+                </div>
+                
+                <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" style="color: var(--primary-color); text-decoration: none;">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
+                
+                <div style="margin-top: 1.5rem; text-align: center; color: var(--text-secondary);">
+                    <p>Demo Credentials:</p>
+                    <p><strong>Admin:</strong> admin / admin123</p>
+                    <p><strong>Patient:</strong> patient1 / password123</p>
+                </div>
+            </form>
+            
+            <!-- Register Form -->
+            <form id="register-form" class="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="register-fullname">Full Name</label>
+                    <input type="text" id="register-fullname" name="full_name" class="form-input" placeholder="Enter your full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="register-email">Email</label>
+                    <input type="email" id="register-email" name="email" class="form-input" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="register-username">Username</label>
+                    <input type="text" id="register-username" name="username" class="form-input" placeholder="Choose a username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="register-password">Password</label>
+                    <input type="password" id="register-password" name="password" class="form-input" placeholder="Choose a password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="register-confirm-password">Confirm Password</label>
+                    <input type="password" id="register-confirm-password" name="confirm_password" class="form-input" placeholder="Confirm your password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="register-role">Role</label>
+                    <select id="register-role" name="role" class="form-select" required>
+                        <option value="patient">Patient</option>
+                        <option value="doctor">Doctor</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="terms" required>
+                        <span>I agree to the <a href="#" style="color: var(--primary-color);">Terms & Conditions</a></span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Account</button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

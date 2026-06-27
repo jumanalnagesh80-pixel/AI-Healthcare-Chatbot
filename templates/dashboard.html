@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AI Healthcare Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard" id="dashboard-page">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>🏥 HealthCare AI</h3>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="/dashboard" class="active">📊 Dashboard</a></li>
+                <li><a href="/appointments">📅 Appointments</a></li>
+                <li><a href="/prescriptions">💊 Prescriptions</a></li>
+                <li><a href="/vital-signs">❤️ Vital Signs</a></li>
+                <li><a href="/lab-reports">🔬 Lab Reports</a></li>
+                <li><a href="/chat">💬 AI Chat</a></li>
+                <li><a href="/profile">👤 Profile</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <div>
+                    <h1>Welcome back, <span id="user-name">Patient</span>!</h1>
+                    <p>Here's your health summary for today</p>
+                </div>
+                <button class="btn btn-primary" onclick="navigateTo('/chat')">🤖 Ask AI Assistant</button>
+            </div>
+            
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <span>📅</span>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="total-appointments">0</h3>
+                        <p>Total Appointments</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <span>⏳</span>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="pending-appointments">0</h3>
+                        <p>Pending Appointments</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <span>💊</span>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="active-prescriptions">0</h3>
+                        <p>Active Prescriptions</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon red">
+                        <span>🔬</span>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="recent-reports">0</h3>
+                        <p>Recent Lab Reports</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Appointments -->
+            <div class="table-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2>Recent Appointments</h2>
+                    <button class="btn btn-primary" onclick="navigateTo('/appointments')">View All</button>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Doctor</th>
+                            <th>Date & Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-appointments-body">
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 2rem;">Loading appointments...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Health Metrics Chart -->
+            <div class="chart-container">
+                <h2>Health Metrics Overview</h2>
+                <canvas id="health-metrics-chart"></canvas>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="grid grid-3" style="margin-top: 2rem;">
+                <div class="card" style="text-align: center;">
+                    <div class="card-icon" style="margin: 0 auto;">📅</div>
+                    <h3 class="card-title">Book Appointment</h3>
+                    <p class="card-text">Schedule a visit with your doctor</p>
+                    <button class="btn btn-primary mt-2" onclick="navigateTo('/appointments')">Book Now</button>
+                </div>
+                
+                <div class="card" style="text-align: center;">
+                    <div class="card-icon" style="margin: 0 auto;">💬</div>
+                    <h3 class="card-title">AI Consultation</h3>
+                    <p class="card-text">Get instant health advice from AI</p>
+                    <button class="btn btn-secondary mt-2" onclick="navigateTo('/chat')">Start Chat</button>
+                </div>
+                
+                <div class="card" style="text-align: center;">
+                    <div class="card-icon" style="margin: 0 auto;">❤️</div>
+                    <h3 class="card-title">Record Vitals</h3>
+                    <p class="card-text">Track your vital signs daily</p>
+                    <button class="btn btn-success mt-2" onclick="navigateTo('/vital-signs')">Add Vitals</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Initialize health metrics chart
+        const ctx = document.getElementById('health-metrics-chart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Health Score',
+                        data: [85, 87, 82, 90, 88, 92, 89],
+                        backgroundColor: 'rgba(79, 70, 229, 0.5)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

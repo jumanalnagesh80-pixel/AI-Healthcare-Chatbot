@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Healthcare Chatbot - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-heartbeat"></i>
+                <span>AI HealthCare</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="active">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="/login" class="btn-login">Login</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">Your AI-Powered <span class="gradient-text">Healthcare Assistant</span></h1>
+                    <p class="hero-subtitle">24/7 Medical Guidance • Intelligent Diagnosis • Complete Health Management</p>
+                    <div class="hero-buttons">
+                        <a href="/login" class="btn btn-primary">
+                            <i class="fas fa-rocket"></i> Get Started
+                        </a>
+                        <a href="#features" class="btn btn-secondary">
+                            <i class="fas fa-play-circle"></i> Learn More
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-users"></i>
+                            <div>
+                                <h3 class="stat-number" data-target="10000">0</h3>
+                                <p>Patients Served</p>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-calendar-check"></i>
+                            <div>
+                                <h3 class="stat-number" data-target="50000">0</h3>
+                                <p>Appointments Booked</p>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-star"></i>
+                            <div>
+                                <h3 class="stat-number" data-target="98">0</h3>
+                                <p>% Satisfaction Rate</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="floating-card card-1">
+                        <i class="fas fa-heartbeat"></i>
+                        <span>AI Diagnosis</span>
+                    </div>
+                    <div class="floating-card card-2">
+                        <i class="fas fa-pills"></i>
+                        <span>Prescriptions</span>
+                    </div>
+                    <div class="floating-card card-3">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Health Tracking</span>
+                    </div>
+                    <div class="hero-illustration">
+                        <i class="fas fa-laptop-medical"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Powerful Features</h2>
+                <p>Everything you need for complete healthcare management</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI-Powered Diagnosis</h3>
+                    <p>Advanced pattern recognition for accurate symptom analysis and disease detection</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-prescription-bottle-alt"></i>
+                    </div>
+                    <h3>Prescription Management</h3>
+                    <p>Track medications, get refill reminders, and manage your prescriptions easily</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <h3>Vital Signs Monitoring</h3>
+                    <p>Real-time tracking of blood pressure, heart rate, temperature, and more</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <h3>Lab Reports</h3>
+                    <p>Upload, analyze, and track your laboratory test results with AI insights</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3>Appointment Booking</h3>
+                    <p>Schedule appointments with doctors across multiple specialties effortlessly</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-ambulance"></i>
+                    </div>
+                    <h3>Emergency Services</h3>
+                    <p>Quick access to emergency contacts, hotlines, and critical health information</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Services</h2>
+                <p>Comprehensive healthcare solutions at your fingertips</p>
+            </div>
+            <div class="services-content">
+                <div class="service-item">
+                    <div class="service-image">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="service-text">
+                        <h3>24/7 AI Chatbot Support</h3>
+                        <p>Get instant medical guidance anytime, anywhere. Our intelligent chatbot provides preliminary diagnosis, health advice, and answers to your medical questions.</p>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Symptom analysis</li>
+                            <li><i class="fas fa-check"></i> Health recommendations</li>
+                            <li><i class="fas fa-check"></i> Emergency detection</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="service-item reverse">
+                    <div class="service-text">
+                        <h3>Complete Health Records</h3>
+                        <p>Centralized storage for all your medical information including prescriptions, lab results, vital signs, and appointment history in one secure location.</p>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Secure cloud storage</li>
+                            <li><i class="fas fa-check"></i> Easy access anywhere</li>
+                            <li><i class="fas fa-check"></i> Export capabilities</li>
+                        </ul>
+                    </div>
+                    <div class="service-image">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                </div>
+                <div class="service-item">
+                    <div class="service-image">
+                        <i class="fas fa-chart-area"></i>
+                    </div>
+                    <div class="service-text">
+                        <h3>Health Analytics & Insights</h3>
+                        <p>Visualize your health trends over time with beautiful charts and graphs. Get personalized insights and recommendations based on your health data.</p>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Trend analysis</li>
+                            <li><i class="fas fa-check"></i> Predictive insights</li>
+                            <li><i class="fas fa-check"></i> Personalized reports</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2>About AI Healthcare Chatbot</h2>
+                    <p>We're revolutionizing healthcare delivery through artificial intelligence and modern technology. Our platform combines advanced AI algorithms with comprehensive health management tools to provide you with the best possible care.</p>
+                    <p>Built with cutting-edge technology including Python, Flask, and advanced machine learning models, our system provides accurate diagnosis, real-time monitoring, and complete health management capabilities.</p>
+                    <div class="about-stats">
+                        <div class="about-stat">
+                            <i class="fas fa-award"></i>
+                            <h4>Award Winning</h4>
+                            <p>Recognized for innovation</p>
+                        </div>
+                        <div class="about-stat">
+                            <i class="fas fa-shield-alt"></i>
+                            <h4>Secure & Private</h4>
+                            <p>HIPAA compliant</p>
+                        </div>
+                        <div class="about-stat">
+                            <i class="fas fa-clock"></i>
+                            <h4>24/7 Available</h4>
+                            <p>Always here for you</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Transform Your Healthcare Experience?</h2>
+                <p>Join thousands of satisfied users who trust AI Healthcare Chatbot for their medical needs</p>
+                <a href="/login" class="btn btn-primary btn-large">
+                    <i class="fas fa-rocket"></i> Get Started Now
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-heartbeat"></i> AI HealthCare</h3>
+                    <p>Your trusted AI-powered healthcare assistant providing 24/7 medical guidance and complete health management.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#services">Services</a></li>
+                        <li><a href="/login">Login</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Services</h4>
+                    <ul>
+                        <li><a href="#">AI Diagnosis</a></li>
+                        <li><a href="#">Appointments</a></li>
+                        <li><a href="#">Prescriptions</a></li>
+                        <li><a href="#">Lab Reports</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li><i class="fas fa-envelope"></i> support@aihealthcare.com</li>
+                        <li><i class="fas fa-phone"></i> 1-800-HEALTH</li>
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Health St, Medical City</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 AI Healthcare Chatbot. All rights reserved.</p>
+                <p>Made with <i class="fas fa-heart"></i> for better healthcare</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
