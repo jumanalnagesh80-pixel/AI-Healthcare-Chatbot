@@ -294,9 +294,9 @@ def init_db():
         
         print("✅ Added 10 specialist doctors to database")
     
-    conn.commit()
-    conn.close()
-    print("✅ Advanced database initialized successfully!")
+    # Don't close connection yet - more tables to create!
+    
+    # Vital Signs table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS vital_signs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -339,6 +339,11 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
+    
+    # NOW commit and close
+    conn.commit()
+    conn.close()
+    print("✅ Advanced database initialized successfully!")
     
     # Create default admin if not exists
     cursor.execute('SELECT COUNT(*) FROM admins')
