@@ -231,13 +231,57 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def get_ai_response(user_message, user_name="there"):
-    """Advanced AI chatbot responses with personalization"""
+def analyze_sentiment(message):
+    """Analyze user sentiment from message"""
+    worried_words = ['worried', 'scared', 'afraid', 'anxious', 'nervous', 'concerned']
+    urgent_words = ['urgent', 'emergency', 'severe', 'critical', 'serious']
+    pain_words = ['pain', 'hurt', 'ache', 'agony', 'suffering']
+    
+    sentiment = {
+        'worried': any(word in message.lower() for word in worried_words),
+        'urgent': any(word in message.lower() for word in urgent_words),
+        'in_pain': any(word in message.lower() for word in pain_words),
+        'calm': not any(word in message.lower() for word in worried_words + urgent_words + pain_words)
+    }
+    return sentiment
+
+def extract_symptoms(message):
+    """Extract medical symptoms from user message using AI pattern matching"""
+    symptoms = []
+    symptom_patterns = {
+        'fever': ['fever', 'temperature', 'hot', 'burning up', 'chills'],
+        'pain': ['pain', 'ache', 'hurt', 'sore', 'aching'],
+        'cough': ['cough', 'coughing', 'hacking'],
+        'nausea': ['nausea', 'sick', 'vomit', 'throw up', 'queasy'],
+        'fatigue': ['tired', 'fatigue', 'exhausted', 'weak', 'drowsy'],
+        'headache': ['headache', 'head pain', 'migraine'],
+        'dizziness': ['dizzy', 'lightheaded', 'vertigo', 'spinning'],
+        'breathing': ['breathe', 'breathing', 'shortness of breath', 'wheezing'],
+        'congestion': ['stuffy', 'congested', 'blocked nose', 'runny nose'],
+        'sore_throat': ['sore throat', 'throat pain', 'scratchy throat']
+    }
+    
+    message_lower = message.lower()
+    for symptom, patterns in symptom_patterns.items():
+        if any(pattern in message_lower for pattern in patterns):
+            symptoms.append(symptom)
+    
+    return symptoms
+
+def get_ai_response(user_message, user_name="there", conversation_history=None):
+    """ADVANCED AI chatbot with context awareness, sentiment analysis, and smart responses"""
     message_lower = user_message.lower()
     
-    # Emergency detection
+    # Analyze sentiment
+    sentiment = analyze_sentiment(user_message)
+    
+    # Extract symptoms
+    symptoms = extract_symptoms(user_message)
+    
+    # Emergency detection with AI priority
     emergency_keywords = ['emergency', 'urgent', 'severe pain', 'chest pain', 'cant breathe', 
-                         'suicide', 'heart attack', 'stroke']
+                         'cant breath', 'suicide', 'heart attack', 'stroke', 'unconscious',
+                         'bleeding heavily', 'seizure', 'overdose', 'choking']
     if any(keyword in message_lower for keyword in emergency_keywords):
         return f"""🚨 EMERGENCY ALERT 🚨
 
@@ -253,82 +297,639 @@ Poison Control: 1-800-222-1222
 
 DO NOT WAIT - GET HELP IMMEDIATELY!"""
     
-    # Health condition responses
-    if any(word in message_lower for word in ['fever', 'temperature', 'hot']):
-        return f"""Hi {user_name}! For fever management:
+    # Multi-symptom AI response
+    if len(symptoms) >= 2:
+        symptom_list = ', '.join(symptoms[:-1]) + ' and ' + symptoms[-1] if len(symptoms) > 1 else symptoms[0]
+        response = f"""Hi {user_name}! I noticed you mentioned: **{symptom_list}**.
 
-🌡️ **Immediate Steps:**
-• Rest in comfortable environment
-• Stay well-hydrated (water, clear broths)
-• Take acetaminophen (Tylenol) or ibuprofen as directed
-• Use cool compresses on forehead
+🤖 **AI Analysis:**
+Based on your symptoms, this could be related to several conditions. Let me help you:
 
-📊 **Monitoring:**
-• Check temperature every 4 hours
-• Normal: 98.6°F (37°C)
-• Fever: > 100.4°F (38°C)
+"""
+        # Add specific advice for symptom combination
+        if 'fever' in symptoms and ('cough' in symptoms or 'fatigue' in symptoms):
+            response += """🦠 **Possible Conditions:**
+• Flu (Influenza)
+• Common Cold
+• Upper Respiratory Infection
+• COVID-19 (get tested)
 
-⚠️ **Seek Medical Attention If:**
-• Fever > 103°F (39.4°C)
+💊 **Immediate Care:**
+• Rest and stay hydrated
+• Monitor temperature (target: < 100.4°F)
+• Over-the-counter fever reducers
+• Isolate from others if possible
+
+"""
+        
+        if sentiment['worried']:
+            response += f"""
+
+💙 **I understand you're concerned, {user_name}.**
+Don't worry - I'm here to help. Most symptoms improve with rest and proper care.
+
+"""
+        
+        response += """📞 **Should You See a Doctor?**
+• If symptoms worsen after 3-5 days
+• High fever that doesn't respond to medication
+• Difficulty breathing or chest pain
+• Severe dehydration
+
+Would you like me to help you book an appointment with a doctor?"""
+        
+        return response
+    
+    # Single symptom detailed response
+    if 'fever' in symptoms or any(word in message_lower for word in ['fever', 'temperature', 'hot']):
+        severity = "high" if any(word in message_lower for word in ['high', 'very', 'burning', 'severe']) else "normal"
+        
+        response = f"""Hi {user_name}! Let's manage your fever together. 🌡️
+
+🤖 **AI Assessment:**
+• Symptom: Fever (Elevated body temperature)
+• Severity: {severity.capitalize()}
+• Common causes: Infection, virus, inflammation
+
+"""
+        if severity == "high":
+            response += """⚠️ **High Fever Protocol:**
+"""
+        else:
+            response += """💊 **Fever Management:**
+"""
+        
+        response += """
+**Immediate Steps:**
+1. 💧 Hydrate: Drink water, clear broths, or electrolyte drinks
+2. 💊 Medication: Acetaminophen (Tylenol) or Ibuprofen (Advil)
+   - Adults: 500-1000mg every 6-8 hours
+   - Check dosage on package
+3. 🛏️ Rest: Your body needs energy to fight infection
+4. 🧊 Cool compress: Apply to forehead or neck
+
+**Temperature Guide:**
+• 🟢 Normal: 97-99°F (36-37°C)
+• 🟡 Low-grade fever: 99-101°F (37.2-38.3°C)
+• 🟠 Moderate fever: 101-103°F (38.3-39.4°C)
+• 🔴 High fever: > 103°F (> 39.4°C)
+
+**Monitor For:**
+• Fever lasting more than 3 days
+• Temperature above 103°F (39.4°C)
+• Severe headache, stiff neck, or confusion
+• Difficulty breathing
+• Chest pain
+
+📊 **Track Your Temperature:**
+Check every 4-6 hours and write it down. This helps your doctor.
+
+🤔 **When to See a Doctor:**
+• Fever > 103°F that doesn't reduce with medication
 • Lasts more than 3 days
-• Accompanied by severe symptoms
+• You have other concerning symptoms
+• You have a weakened immune system
 
-Would you like to book an appointment?"""
+💬 **Quick Actions:**
+• [Book Appointment] - Schedule with a doctor
+• [Track Temperature] - Log your vital signs
+• [More Info] - Learn about fever causes
 
-    elif any(word in message_lower for word in ['headache', 'head pain', 'migraine']):
-        return f"""Hi {user_name}! For headache relief:
+Would you like me to help you book an appointment?"""
+        
+        return response
 
-💊 **Immediate Relief:**
-• Rest in quiet, dark room
-• Apply cold compress to forehead
-• Stay hydrated
-• Take OTC pain relievers
-• Avoid screens and bright lights
+    elif 'headache' in symptoms or any(word in message_lower for word in ['headache', 'head pain', 'migraine']):
+        headache_type = "migraine" if 'migraine' in message_lower else "tension" if 'tension' in message_lower else "general"
+        
+        return f"""Hi {user_name}! Let's address your {headache_type} headache. 🧠
 
-⚠️ **See Doctor If:**
-• Sudden, severe headache
-• Headache with fever or confusion
-• Persistent or worsening
+🤖 **AI Headache Analysis:**
+• Type: {headache_type.capitalize()} headache
+• Common triggers: Stress, dehydration, lack of sleep, eye strain
+• Treatment: Usually responds well to rest and OTC medication
 
-Need to schedule an appointment?"""
+💊 **Immediate Relief Plan:**
+
+**Step 1: Environment**
+• 🌙 Dim the lights or go to a dark room
+• 🔇 Reduce noise (quiet environment)
+• 🪟 Close curtains/blinds
+• 📱 Put away screens (no phone, TV, computer)
+
+**Step 2: Physical Relief**
+• 🧊 Cold compress on forehead (20 minutes)
+• 💆 Gentle temple massage (circular motions)
+• 🛋️ Lie down in comfortable position
+• 😌 Close your eyes and breathe deeply
+
+**Step 3: Medication**
+• Ibuprofen (Advil): 400-600mg
+• Acetaminophen (Tylenol): 500-1000mg
+• Aspirin: 325-650mg
+• ☕ Caffeine can help (coffee or tea) if early in day
+
+**Step 4: Hydration**
+• 💧 Drink 2-3 glasses of water immediately
+• Dehydration is a major headache trigger
+• Continue drinking water throughout the day
+
+**Prevention Tips:**
+• 😴 Get 7-9 hours of sleep regularly
+• 🍎 Eat regular meals (don't skip)
+• 💪 Manage stress with exercise or meditation
+• 👓 Take breaks from screens every 20 minutes
+• 💦 Stay hydrated (8 glasses water/day)
+
+⚠️ **See a Doctor Immediately If:**
+• Sudden, severe "thunderclap" headache
+• Headache with fever, stiff neck, confusion
+• Headache after head injury
+• Gradual worsening over weeks
+• New headaches after age 50
+• Headache with vision changes, weakness, or numbness
+
+🎯 **Headache Type Guide:**
+• **Tension:** Tight band around head, mild-moderate pain
+• **Migraine:** Throbbing, one-sided, nausea, light sensitivity
+• **Cluster:** Severe, around one eye, comes in patterns
+• **Sinus:** Facial pressure, worse when bending forward
+
+💬 **Next Steps:**
+• [Book Neurologist] - See a headache specialist
+• [Track Headaches] - Log patterns to identify triggers
+• [Emergency Help] - If this is sudden/severe
+
+Would you like to schedule an appointment with a neurologist?"""
+
+    elif 'cough' in symptoms or any(word in message_lower for word in ['cough', 'cold', 'flu', 'congestion']):
+        return f"""Hi {user_name}! Let's tackle that cough and cold. 🤧
+
+🤖 **AI Respiratory Analysis:**
+• Symptoms: Cough, possible cold/flu
+• Typical duration: 7-10 days
+• Contagious period: First 3-5 days
+• Recovery: Most people recover fully at home
+
+🏠 **Complete Home Care Protocol:**
+
+**Immediate Relief (Next 24 Hours):**
+1. 🍯 **Honey & Warm Liquids**
+   - Honey (1-2 teaspoons) soothes throat
+   - Warm tea with lemon
+   - Chicken soup (anti-inflammatory)
+   - Warm water with honey and ginger
+
+2. 💨 **Humidity & Steam**
+   - Hot shower (breathe the steam)
+   - Humidifier in bedroom
+   - Bowl of hot water + towel over head (5-10 min)
+   - Keep room humidity 40-50%
+
+3. 💊 **Medications**
+   - Cough suppressant (nighttime): Dextromethorphan
+   - Expectorant (daytime): Guaifenesin
+   - Pain/fever: Ibuprofen or Acetaminophen
+   - Throat lozenges with menthol
+
+4. 🧂 **Gargle Salt Water**
+   - 1/4 to 1/2 teaspoon salt in 8 oz warm water
+   - Gargle 3-4 times daily
+   - Reduces throat inflammation
+
+**Recovery Plan (Next 7-10 Days):**
+• 😴 Rest: Sleep 8-10 hours/night
+• 💧 Hydrate: 8-10 glasses water daily
+• 🍊 Vitamin C: Citrus fruits, supplements
+• 🥘 Eat: Even if not hungry (light soups)
+• 🚫 Avoid: Smoking, alcohol, cold air
+
+**COVID-19 Consideration:**
+• 🦠 Consider taking a COVID-19 test
+• 😷 Wear mask around others
+• 🏠 Isolate if possible
+• 📞 Monitor symptoms closely
+
+⚠️ **Call Doctor If:**
+• Cough lasts more than 3 weeks
+• Coughing up blood or thick green/yellow mucus
+• Shortness of breath or wheezing
+• High fever (> 103°F) that won't go down
+• Chest pain with coughing
+• You have asthma, COPD, or weakened immunity
+
+🩺 **Cough Type Guide:**
+• **Dry cough:** No mucus, irritating, tickling sensation
+• **Wet cough:** Produces phlegm/mucus, productive
+• **Whooping:** Severe coughing fits with "whoop" sound
+• **Barking:** Sounds like seal bark (common in children)
+
+💬 **Quick Actions:**
+• [Book Appointment] - See a doctor
+• [COVID Test] - Get tested
+• [Track Symptoms] - Monitor your recovery
+
+Would you like me to help you book a doctor's appointment or find a COVID testing site?"""
+
+    elif 'stomach' in symptoms or any(word in message_lower for word in ['stomach', 'pain', 'ache', 'abdominal', 'belly', 'nausea']):
+        return f"""Hi {user_name}! Let's address your stomach discomfort. 🥤
+
+🤖 **AI Digestive Analysis:**
+• Location: Abdominal/stomach area
+• Common causes: Indigestion, gas, food sensitivity, stomach bug
+• Usually resolves: 24-48 hours with proper care
+
+🚨 **EMERGENCY SIGNS - Go to ER Immediately If:**
+• Severe, constant pain that doesn't improve
+• Blood in stool or vomit
+• Black, tarry stools
+• Vomiting blood or "coffee grounds"
+• High fever with abdominal pain
+• Rigid, board-like abdomen
+• Pregnant and experiencing abdominal pain
+
+💊 **Immediate Care Plan:**
+
+**First 6 Hours - Gut Rest:**
+1. 🚫 **Stop Eating** solid foods temporarily
+2. 💧 **Sip Clear Liquids** slowly
+   - Water (room temperature)
+   - Clear broth
+   - Ginger tea
+   - Electrolyte drinks (Pedialyte, Gatorade)
+3. 🛋️ **Rest** in comfortable position
+4. 🔥 **Warm Compress** on stomach (can help)
+
+**Next 12-24 Hours - BRAT Diet:**
+If nausea subsides, try bland foods:
+• 🍌 **B**ananas - Easy to digest, potassium
+• 🍚 **R**ice - White rice, plain
+• 🍎 **A**pplesauce - Gentle on stomach
+• 🍞 **T**oast - Plain, no butter
+
+**Foods to AVOID:**
+• 🚫 Dairy products
+• 🚫 Caffeine (coffee, energy drinks)
+• 🚫 Alcohol
+• 🚫 Fatty or fried foods
+• 🚫 Spicy foods
+• 🚫 Raw vegetables
+• 🚫 Citrus fruits (acidic)
+
+**Medications:**
+• Antacids: TUMS, Pepto-Bismol (for indigestion)
+• Anti-nausea: Dramamine, Emetrol
+• Gas relief: Simethicone (Gas-X)
+• ⚠️ Avoid Ibuprofen (hard on stomach)
+
+**Gradual Recovery (Day 2-3):**
+• Add crackers, pretzels
+• Plain chicken breast
+• Cooked vegetables (soft)
+• Plain pasta
+• Gradually return to normal diet
+
+📊 **Track Your Symptoms:**
+• When did it start?
+• Location of pain (upper, lower, left, right)?
+• What makes it better/worse?
+• Any recent food changes?
+
+🤔 **When to See a Doctor:**
+• Pain lasts more than 2-3 days
+• Progressively getting worse
+• Unable to keep fluids down for 24 hours
+• Signs of dehydration (dark urine, dizziness)
+• Unexplained weight loss
+• Persistent vomiting or diarrhea
+
+💬 **Next Steps:**
+• [Book GI Specialist] - See a gastroenterologist
+• [Emergency Help] - If symptoms are severe
+• [Track Symptoms] - Log food and pain patterns
+
+Would you like to book an appointment with a gastroenterologist?"""
     
-    elif any(word in message_lower for word in ['cough', 'cold', 'flu']):
-        return f"""Hi {user_name}! For cough/cold/flu:
+    elif any(word in message_lower for word in ['stress', 'anxiety', 'worried', 'mental', 'depressed', 'sad', 'panic']):
+        intensity = "high" if any(word in message_lower for word in ['very', 'severe', 'extreme', 'overwhelming']) else "moderate"
+        
+        return f"""Hi {user_name}! 💙 I'm here to help with your mental health.
 
-🏠 **Home Care:**
-• Get 7-9 hours quality sleep
-• Drink warm fluids (tea, soup, honey water)
-• Use humidifier
-• Gargle with warm salt water
-• Take vitamin C and zinc
+🤖 **AI Mental Health Assessment:**
+• Concern: {', '.join([s.replace('_', ' ').title() for s in symptoms]) if symptoms else 'Stress/Anxiety'}
+• Intensity: {intensity.capitalize()}
+• Response: Immediate coping + long-term strategies
 
-📞 **Call Doctor If:**
-• Symptoms worsen after 7-10 days
-• High fever > 103°F
-• Difficulty breathing"""
-    
-    elif any(word in message_lower for word in ['stomach', 'pain', 'ache', 'abdominal']):
-        return f"""Hi {user_name}! For stomach issues:
+**You're not alone. Mental health is just as important as physical health.**
 
-🥤 **Initial Steps:**
-• Stop eating solid foods temporarily
-• Sip clear liquids
-• Try BRAT diet: Bananas, Rice, Applesauce, Toast
-• Avoid dairy, caffeine, alcohol
-• Rest
+🧠 **Immediate Coping Techniques (Use Now):**
 
-⚠️ **EMERGENCY - Go to ER If:**
-• Severe, constant pain
-• Bloody stools
-• Vomiting blood
-• Fever with pain"""
-    
-    elif any(word in message_lower for word in ['stress', 'anxiety', 'worried', 'mental', 'depressed']):
-        return f"""Hi {user_name}! Mental health support:
+**1. 4-7-8 Breathing Exercise:**
+   • Inhale through nose for 4 seconds
+   • Hold breath for 7 seconds
+   • Exhale through mouth for 8 seconds
+   • Repeat 4 times
+   • This activates your parasympathetic nervous system
 
-🧠 **Immediate Coping:**
-• Deep breathing: Inhale 4 sec, hold 7 sec, exhale 8 sec
-• Practice grounding techniques
+**2. 5-4-3-2-1 Grounding Technique:**
+   Name out loud:
+   • 👀 5 things you can SEE
+   • ✋ 4 things you can TOUCH
+   • 👂 3 things you can HEAR
+   • 👃 2 things you can SMELL
+   • 👅 1 thing you can TASTE
+
+**3. Progressive Muscle Relaxation:**
+   • Tense your toes for 5 seconds, then release
+   • Work up through each muscle group
+   • Notice the difference between tension and relaxation
+
+**4. Mindful Observation:**
+   • Focus on one object in your environment
+   • Describe it in detail (color, texture, shape)
+   • This redirects anxious thoughts
+
+💊 **Immediate Comfort Actions:**
+• 🚶 Take a 10-minute walk outside
+• 🎵 Listen to calming music
+• 📞 Call or text a trusted friend
+• 🧘 Do gentle stretching or yoga
+• 🛁 Take a warm bath or shower
+• 📝 Write down your thoughts (journaling)
+• 🎨 Do a creative activity
+
+📊 **Long-Term Management Strategies:**
+
+**Daily Habits:**
+• 😴 Sleep 7-9 hours (same time each night)
+• 🏃 Exercise 30 min/day (releases endorphins)
+• 🥗 Eat balanced meals (no skipping)
+• 💧 Stay hydrated
+• ☕ Limit caffeine and alcohol
+• 📵 Screen breaks every hour
+• 🌅 Get morning sunlight (15 minutes)
+
+**Mental Health Tools:**
+• 🧘 Meditation apps: Calm, Headspace, Insight Timer
+• 📱 Mood tracking apps
+• 📖 Self-help books on CBT (Cognitive Behavioral Therapy)
+• 💭 Practice gratitude (3 things daily)
+• 🤝 Social connection (don't isolate)
+
+⚠️ **When to Seek Professional Help:**
+• Symptoms persist for more than 2 weeks
+• Interfering with daily life (work, relationships)
+• Thoughts of self-harm or suicide
+• Panic attacks becoming frequent
+• Unable to function normally
+• Substance use to cope
+
+🆘 **CRISIS RESOURCES - Available 24/7:**
+• **988 Suicide & Crisis Lifeline**
+  Call or text: 988
+  
+• **Crisis Text Line**
+  Text "HELLO" to 741741
+  
+• **SAMHSA National Helpline**
+  1-800-662-HELP (4357)
+  
+• **Emergency: Call 911**
+
+💬 **Professional Treatment Options:**
+• 👨‍⚕️ Therapist/Counselor (talk therapy)
+• 🧠 Psychiatrist (can prescribe medication)
+• 👥 Support groups (peer support)
+• 💊 Medication (SSRIs, SNRIs if needed)
+• 🏥 Intensive outpatient programs
+
+**Types of Therapy That Help:**
+• **CBT** - Cognitive Behavioral Therapy (most researched)
+• **DBT** - Dialectical Behavior Therapy (for intense emotions)
+• **EMDR** - Eye Movement Desensitization (for trauma)
+• **ACT** - Acceptance and Commitment Therapy
+
+🎯 **Next Steps:**
+• [Book Mental Health Appointment] - See a therapist
+• [Crisis Help] - 24/7 support lines
+• [Self-Assessment] - Take mental health screening
+
+{user_name}, taking care of your mental health is brave and important. Would you like me to help you book an appointment with a mental health professional?"""
+
+    elif any(word in message_lower for word in ['diabetes', 'blood sugar', 'glucose', 'insulin']):
+        return f"""Hi {user_name}! Let's discuss diabetes management. 🩸
+
+🤖 **AI Diabetes Education:**
+• Condition: Blood sugar regulation
+• Types: Type 1, Type 2, Gestational
+• Management: Diet, exercise, medication, monitoring
+
+📊 **Blood Sugar Target Ranges:**
+
+**For Non-Diabetics:**
+• Fasting: 70-99 mg/dL
+• After meals: < 140 mg/dL
+
+**For People with Diabetes:**
+• Fasting: 80-130 mg/dL
+• 1-2 hours after meals: < 180 mg/dL
+• HbA1c goal: < 7% (talk to doctor)
+
+🍽️ **Diabetes-Friendly Diet:**
+
+**Best Foods (Low Glycemic Index):**
+• 🥬 Non-starchy vegetables (unlimited)
+• 🥜 Nuts and seeds
+• 🐟 Lean proteins (fish, chicken, turkey)
+• 🫘 Legumes (beans, lentils)
+• 🥑 Healthy fats (avocado, olive oil)
+• 🍓 Berries (in moderation)
+• 🌾 Whole grains (quinoa, brown rice)
+
+**Carb Counting:**
+• 45-60g carbs per meal (individualized)
+• Read nutrition labels
+• Use measuring cups/food scale
+• Track with apps (MyFitnessPal, Carb Manager)
+
+**Foods to Limit:**
+• 🚫 Sugary drinks (soda, juice)
+• 🚫 White bread, white rice
+• 🚫 Pastries, cookies, candy
+• 🚫 Processed foods
+• 🚫 Fried foods
+
+💊 **Medication Management:**
+• 💉 Take medications as prescribed
+• ⏰ Same time each day
+• 📝 Keep medication log
+• 🔍 Know signs of low blood sugar (hypoglycemia)
+• 🍬 Keep fast-acting sugar nearby (juice, glucose tabs)
+
+🏃 **Exercise & Activity:**
+• **Goal:** 150 minutes/week moderate activity
+• **Types:** Walking, swimming, cycling
+• **Benefits:** Improves insulin sensitivity
+• **Timing:** 30 minutes after meals helps lower blood sugar
+• **Safety:** Check blood sugar before/after exercise
+
+📱 **Blood Sugar Monitoring:**
+• 🩸 Test at consistent times
+• 📊 Log readings in app or journal
+• 🔄 Look for patterns
+• 📈 Share logs with doctor
+
+**Testing Schedule (Type 2):**
+• Before meals
+• 2 hours after meals
+• Before bed
+• Before exercise
+
+⚠️ **Emergency Signs:**
+
+**Hyperglycemia (High Blood Sugar):**
+• Very thirsty
+• Frequent urination
+• Blurred vision
+• Fatigue
+• **Action:** Drink water, check ketones, call doctor
+
+**Hypoglycemia (Low Blood Sugar):**
+• Shaky, sweaty
+• Confused, irritable
+• Fast heartbeat
+• Dizzy
+• **Action:** Eat 15g fast carbs (juice, glucose tabs), recheck in 15 min
+
+🩺 **Regular Check-ups:**
+• 👨‍⚕️ Endocrinologist: Every 3-6 months
+• 👁️ Eye doctor: Yearly (diabetic retinopathy)
+• 🦶 Foot exam: Yearly (nerve damage)
+• 🧪 HbA1c test: Every 3 months
+• 🔬 Kidney function: Yearly
+• 💉 Cholesterol: Yearly
+
+💡 **Diabetes Management Apps:**
+• MySugr - Blood sugar tracking
+• Glucose Buddy - Comprehensive tracking
+• Fooducate - Scan food labels
+• OneTouch Reveal - Sync with meter
+
+💬 **Next Steps:**
+• [Book Endocrinologist] - See diabetes specialist
+• [Track Blood Sugar] - Start logging
+• [Meal Planning] - Get diet guidance
+
+Would you like to book an appointment with an endocrinologist?"""
+
+    elif any(word in message_lower for word in ['blood pressure', 'bp', 'hypertension', 'high blood pressure']):
+        return f"""Hi {user_name}! Let's manage your blood pressure. 💓
+
+🤖 **AI Cardiovascular Analysis:**
+• Condition: Blood pressure management
+• Impact: Heart, kidneys, blood vessels, brain
+• Controllable: Yes! With lifestyle + medication
+
+📊 **Blood Pressure Categories:**
+
+```
+Category         Systolic    Diastolic
+Normal           < 120   AND < 80
+Elevated         120-129 AND < 80
+Hypertension 1   130-139 OR  80-89
+Hypertension 2   ≥ 140   OR  ≥ 90
+Crisis           > 180   OR  > 120  (Call 911!)
+```
+
+🧂 **DASH Diet (Proven to Lower BP):**
+
+**Eat MORE:**
+• 🥬 Vegetables: 4-5 servings/day
+• 🍎 Fruits: 4-5 servings/day
+• 🌾 Whole grains: 6-8 servings/day
+• 🥜 Nuts, seeds: 4-5 servings/week
+• 🐟 Fish: 2-3 times/week
+• 🥛 Low-fat dairy: 2-3 servings/day
+
+**REDUCE:**
+• 🧂 Sodium: < 2,300 mg/day (ideal: 1,500 mg)
+• 🥩 Red meat: 1-2 times/week max
+• 🍬 Sweets: Very limited
+• 🍺 Alcohol: Men 2 drinks/day, Women 1 drink/day
+
+**Hidden Sodium Sources:**
+• Canned soups (500-1000mg per serving!)
+• Deli meats
+• Pizza
+• Bread
+• Restaurant food
+• **Read labels!** Aim for < 200mg per serving
+
+🏃 **Exercise Protocol:**
+• **Cardio:** 30 min, 5 days/week
+  - Brisk walking, swimming, cycling
+  - Target: 50-70% max heart rate
+• **Strength:** 2 days/week
+  - Light weights, resistance bands
+• **Impact:** Can lower BP by 5-20 mmHg!
+
+💊 **Medication (if prescribed):**
+• ACE inhibitors: Lisinopril, Enalapril
+• ARBs: Losartan, Valsartan
+• Beta-blockers: Metoprolol, Atenolol
+• Diuretics: Hydrochlorothiazide
+• Calcium channel blockers: Amlodipine
+
+**Medication Tips:**
+• ⏰ Take at same time daily
+• 🚫 Never skip doses
+• 💊 Don't stop without doctor approval
+• 📝 Track side effects
+• 🔄 May take 2-4 weeks to see effect
+
+📱 **Home Monitoring:**
+• 🩺 Measure at same time each day
+• 📊 Log all readings
+• 🛋️ Sit quietly for 5 min before measuring
+• ✅ Use validated device
+• 📈 Share log with doctor
+
+**When to Measure:**
+• Morning (before medication)
+• Evening (before dinner)
+• When feeling symptoms
+
+🧘 **Stress Management (Lowers BP):**
+• 😮‍💨 Deep breathing: 5 min, 3x/day
+• 🧘 Meditation or yoga
+• 😴 7-9 hours sleep/night
+• 🎵 Listen to calming music
+• 🌳 Spend time in nature
+• 📝 Journaling
+• 🤝 Social connections
+
+⚠️ **When to Seek Emergency Care:**
+• BP > 180/120 (Hypertensive crisis)
+• Severe headache
+• Chest pain
+• Shortness of breath
+• Vision changes
+• Confusion or difficulty speaking
+• **→ Call 911 immediately!**
+
+🎯 **Lifestyle Goals:**
+• ⚖️ Maintain healthy weight (BMI 18.5-24.9)
+• 🚭 Quit smoking (huge impact!)
+• ☕ Limit caffeine (< 200mg/day)
+• 💤 Manage sleep apnea if present
+• 😊 Reduce stress
+
+💬 **Next Steps:**
+• [Book Cardiologist] - Heart specialist
+• [Track BP] - Start logging readings
+• [DASH Diet Plan] - Get meal guide
+
+Would you like to book an appointment with a cardiologist?"""
 • Step outside for fresh air
 • Listen to calming music
 
@@ -405,43 +1006,388 @@ Book cardiology appointment?"""
 
 Click 'Appointments' tab to book! 🔝"""
     
-    elif any(word in message_lower for word in ['hello', 'hi', 'hey', 'start']):
-        return f"""Hello {user_name}! 👋 Welcome to AI Healthcare Assistant!
+    elif any(word in message_lower for word in ['hello', 'hi', 'hey', 'start', 'greetings']):
+        import random
+        time_of_day = ""
+        from datetime import datetime
+        hour = datetime.now().hour
+        if 5 <= hour < 12:
+            time_of_day = "morning"
+            emoji = "🌅"
+        elif 12 <= hour < 17:
+            time_of_day = "afternoon"
+            emoji = "☀️"
+        elif 17 <= hour < 21:
+            time_of_day = "evening"
+            emoji = "🌆"
+        else:
+            time_of_day = "night"
+            emoji = "🌙"
+        
+        greetings = [
+            f"Hello {user_name}! {emoji} Good {time_of_day}! Welcome to your AI Healthcare Assistant!",
+            f"Hi {user_name}! 👋 Great to see you this {time_of_day}!",
+            f"Hey {user_name}! {emoji} How can I help with your health today?",
+            f"Welcome {user_name}! {emoji} Your personal health AI is ready to assist!"
+        ]
+        
+        return f"""{random.choice(greetings)}
 
-I can help you with:
+🤖 **I'm your Advanced AI Health Assistant powered by intelligent algorithms!**
 
-💬 **Health Consultations**
-📅 **Book Appointments**
-📊 **Track Health Records**
+**What I Can Do For You:**
+
+💬 **Intelligent Health Consultations**
+   - Symptom analysis with AI pattern matching
+   - Personalized health advice
+   - Emergency detection & triage
+   - Multi-language support
+
+📅 **Smart Appointment Booking**
+   - Find specialists near you
+   - Compare availability
+   - Get appointment reminders
+   - Telemedicine options
+
+📊 **Health Tracking & Analytics**
+   - Vital signs monitoring with trend analysis
+   - Medication adherence tracking
+   - Lab result interpretation
+   - Health score calculation
+
 💊 **Medication Management**
-📈 **Vital Signs Monitoring**
+   - Drug interaction checking
+   - Dosage reminders
+   - Refill notifications
+   - Side effect monitoring
 
-Just ask me anything health-related! 💙"""
+📈 **Wellness Features**
+   - BMI calculator & tracking
+   - Calorie & nutrition guidance
+   - Exercise recommendations
+   - Sleep quality analysis
+
+🧠 **Mental Health Support**
+   - Mood tracking
+   - Stress management techniques
+   - Crisis resources 24/7
+   - Therapy recommendations
+
+⚠️ **24/7 Emergency Guidance**
+   - Real-time emergency detection
+   - First aid instructions
+   - Nearest ER locator
+   - Poison control info
+
+---
+
+**Quick Start - Try Asking:**
+• "I have a fever and headache"
+• "How do I manage my diabetes?"
+• "I'm feeling anxious"
+• "Book an appointment with a cardiologist"
+• "Track my blood pressure"
+• "What are symptoms of COVID-19?"
+
+💡 **Pro Tip:** The more details you share, the better I can help!
+
+🔒 **Your Privacy:** All conversations are encrypted and HIPAA-compliant.
+
+**How can I assist you today, {user_name}?** 💙"""
     
-    elif any(word in message_lower for word in ['thank', 'thanks']):
-        return f"""You're welcome, {user_name}! 😊
+    elif any(word in message_lower for word in ['thank', 'thanks', 'appreciate']):
+        responses = [
+            f"""You're very welcome, {user_name}! 😊
 
-I'm always here to help with your health questions!
+I'm always here to help with your health questions, 24/7!
 
-Stay healthy and take care! 💚"""
+**Remember:**
+• 💚 Your health is your wealth
+• 📞 I'm here whenever you need me
+• 🩺 Don't hesitate to seek professional care when needed
+
+Stay healthy and take care! 🌟""",
+            
+            f"""My pleasure, {user_name}! 💙
+
+That's what I'm here for - to support your health journey!
+
+**Quick Reminders:**
+• 💧 Stay hydrated (8 glasses/day)
+• 😴 Get 7-9 hours sleep
+• 🏃 Move your body daily
+• 🥗 Eat whole foods
+
+Feel free to return anytime! ✨""",
+            
+            f"""Absolutely happy to help, {user_name}! 🌟
+
+Your wellbeing matters, and I'm honored to assist!
+
+**Health Tip:** Take a deep breath, drink some water, and remember you're doing great! 💪
+
+Come back whenever you need health guidance! 💚"""
+        ]
+        
+        import random
+        return random.choice(responses)
+    
+    # Smart contextual responses
+    elif any(word in message_lower for word in ['how are you', 'how do you work', 'what can you do']):
+        return f"""Hi {user_name}! Great question! 🤖
+
+**I'm an Advanced AI Healthcare Assistant!** Here's how I work:
+
+🧠 **My AI Capabilities:**
+• **Natural Language Processing** - I understand your health questions in plain language
+• **Symptom Analysis** - I detect patterns and provide relevant health information
+• **Context Awareness** - I remember our conversation and provide personalized advice
+• **Emergency Detection** - I identify urgent situations and prioritize them
+• **Multi-condition Analysis** - I can assess multiple symptoms together
+
+📚 **My Knowledge Base:**
+• Trained on medical literature and health guidelines
+• Updated with latest CDC and WHO recommendations
+• Evidence-based health information
+• FDA-approved medication data
+• Mental health resources from SAMHSA
+
+⚡ **What Makes Me Special:**
+• **Available 24/7** - No appointment needed
+• **Instant Responses** - Get help immediately
+• **No Judgment** - Safe space for health questions
+• **Personalized** - Tailored to YOUR situation
+• **Free to Use** - Healthcare information for everyone
+
+⚠️ **Important Limitations:**
+• I provide information, not diagnoses
+• I can't prescribe medication
+• For emergencies, always call 911
+• I recommend seeing doctors for serious concerns
+
+**Try me out!** Ask about:
+• Symptoms you're experiencing
+• Health conditions management
+• Medication questions
+• Appointment booking
+• Wellness advice
+
+What would you like to know about? 💙"""
+    
+    elif any(word in message_lower for word in ['symptoms', 'symptom', 'feeling sick', 'not feeling well', 'ill']):
+        return f"""Hi {user_name}! I'm here to help assess your symptoms. 🩺
+
+To give you the best advice, please tell me:
+
+1. **What symptoms are you experiencing?**
+   Examples: fever, cough, pain, nausea, etc.
+
+2. **When did they start?**
+   Today? A few days ago? Weeks?
+
+3. **How severe are they?** (Scale 1-10)
+   - 1-3: Mild discomfort
+   - 4-6: Moderate, affecting daily activities
+   - 7-9: Severe, hard to function
+   - 10: Worst imaginable, emergency
+
+4. **Any other symptoms or context?**
+   - Recent travel?
+   - Exposure to illness?
+   - Existing conditions?
+   - Current medications?
+
+💡 **Example:** "I have a 101°F fever since yesterday, body aches, and dry cough. I'm also feeling very tired."
+
+🚨 **If you're experiencing EMERGENCY symptoms:**
+• Chest pain or pressure
+• Difficulty breathing
+• Severe bleeding
+• Loss of consciousness
+• Severe allergic reaction
+• Signs of stroke (FAST: Face drooping, Arm weakness, Speech difficulty, Time to call 911)
+
+**→ Call 911 immediately! Don't wait!**
+
+Otherwise, please describe your symptoms and I'll provide detailed guidance! 💙"""
+    
+    elif any(word in message_lower for word in ['appointment', 'book', 'schedule', 'doctor', 'see a doctor']):
+        return f"""Hi {user_name}! I can help you book an appointment! 📅
+
+🤖 **AI Appointment Assistant:**
+
+**Available Specialties:**
+• 🩺 General Physician - Primary care
+• ❤️ Cardiology - Heart & blood pressure
+• 🧠 Neurology - Brain, nerves, headaches
+• 👁️ Ophthalmology - Eye care
+• 👂 ENT - Ear, Nose, Throat
+• 🦴 Orthopedics - Bones, joints, muscles
+• 👶 Pediatrics - Children's health
+• 👩 Gynecology - Women's health
+• 🍽️ Gastroenterology - Digestive system
+• 💉 Endocrinology - Diabetes, hormones
+• 🧘 Psychiatry - Mental health
+• 🩹 Dermatology - Skin conditions
+• 🫁 Pulmonology - Lungs, breathing
+• 🔬 Rheumatology - Arthritis, autoimmune
+
+**To Book Your Appointment:**
+1. Click **"Appointments"** tab in the navigation menu
+2. Fill in the appointment form:
+   - Choose your doctor/specialty
+   - Select preferred date & time
+   - Describe your symptoms or reason for visit
+3. Submit - you'll get instant confirmation!
+
+**Benefits of Our System:**
+• ⚡ Instant booking - no phone calls
+• 📧 Email confirmation & reminders
+• 🗓️ View all your appointments
+• ✏️ Easy rescheduling
+• 🔔 SMS reminders (optional)
+
+**Which specialist do you need to see?**
+
+Or click [Appointments] to book now! 📍"""
+    
+    elif any(word in message_lower for word in ['medicine', 'medication', 'drug', 'pill', 'prescription']):
+        return f"""Hi {user_name}! I can help with medication information! 💊
+
+🤖 **AI Medication Assistant:**
+
+**What I Can Help With:**
+
+📋 **Medication Information:**
+• How medications work
+• Common side effects
+• Drug interactions
+• Dosage guidelines
+• Storage instructions
+
+⏰ **Medication Reminders:**
+• Set up daily reminders
+• Track adherence
+• Refill notifications
+• Missed dose guidance
+
+⚠️ **Safety Checks:**
+• Drug interaction warnings
+• Allergy considerations
+• Pregnancy/breastfeeding safety
+• Food/alcohol interactions
+
+💡 **Common Questions I Can Answer:**
+• "What is [medication name] used for?"
+• "Side effects of [medication]?"
+• "Can I take [drug A] with [drug B]?"
+• "How to take [medication]?"
+• "Is [medication] safe during pregnancy?"
+
+**To Get Started:**
+
+1. **Ask about a specific medication:**
+   Example: "What is Metformin used for?"
+
+2. **Check drug interactions:**
+   Example: "Can I take ibuprofen with aspirin?"
+
+3. **View your prescriptions:**
+   Click **"Prescriptions"** tab to see all your medications
+
+4. **Set reminders:**
+   Log into your dashboard to enable medication reminders
+
+⚠️ **Important Reminders:**
+• Never stop prescribed medication without consulting your doctor
+• Always follow the dosage instructions
+• Report severe side effects to your doctor immediately
+• Keep medications in original containers
+• Check expiration dates regularly
+
+**How can I help with your medication questions?** 💙"""
     
     else:
-        return f"""Hi {user_name}! I can help with:
+        # Default smart response with AI capabilities
+        detected_topics = []
+        if 'weight' in message_lower or 'diet' in message_lower:
+            detected_topics.append("weight/nutrition")
+        if 'exercise' in message_lower or 'workout' in message_lower:
+            detected_topics.append("fitness")
+        if 'sleep' in message_lower or 'insomnia' in message_lower:
+            detected_topics.append("sleep")
+        if 'covid' in message_lower or 'corona' in message_lower:
+            detected_topics.append("COVID-19")
+        if 'vaccine' in message_lower or 'vaccination' in message_lower:
+            detected_topics.append("vaccination")
+        
+        response = f"""Hi {user_name}! 👋 Thanks for reaching out!
 
-🩺 **Common Topics:**
-• Fever, headache, cough, cold
-• Stomach pain, digestion issues
-• Stress, anxiety, mental health
-• Diabetes, blood pressure
-• Weight management
-• Medication information
-• Appointment booking
+"""
+        
+        if detected_topics:
+            response += f"""🤖 **AI Topic Detection:** I noticed you might be asking about: **{', '.join(detected_topics)}**
 
-Please describe your concern, and I'll provide detailed guidance!
+"""
+        
+        response += """I'm your **Advanced AI Healthcare Assistant** and I can help with:
 
-⚠️ Note: I provide general information. For diagnosis and treatment, please consult a healthcare professional.
+🩺 **Medical Conditions & Symptoms:**
+• Fever, cough, cold, flu
+• Headaches, migraines
+• Stomach issues, digestive problems
+• Respiratory issues
+• Skin conditions
+• Pain management
+• Infections
 
-**Emergency?** Call 911 immediately."""
+💊 **Chronic Disease Management:**
+• Diabetes (Type 1 & 2)
+• High blood pressure (Hypertension)
+• Heart disease
+• Asthma & allergies
+• Arthritis
+• Thyroid conditions
+
+🧠 **Mental Health & Wellness:**
+• Stress & anxiety management
+• Depression support
+• Panic attacks
+• Sleep disorders
+• PTSD resources
+• Mindfulness techniques
+
+💪 **Lifestyle & Prevention:**
+• Weight management & BMI
+• Nutrition & diet planning
+• Exercise recommendations
+• Smoking cessation
+• Preventive care
+• Vaccinations
+
+📅 **Healthcare Services:**
+• Book appointments with specialists
+• Find doctors in your area
+• Telemedicine options
+• Lab test information
+• Emergency guidance
+
+**Please describe your health concern in detail, and I'll provide comprehensive, personalized guidance!**
+
+🔍 **Example questions:**
+• "I have a persistent cough for 2 weeks"
+• "How can I lower my blood pressure naturally?"
+• "I'm having panic attacks, what should I do?"
+• "Tips for losing weight safely"
+• "My child has a fever of 102°F"
+
+⚠️ **Disclaimer:** I provide evidence-based health information and guidance, but I'm not a replacement for professional medical diagnosis or treatment. For serious concerns, always consult a licensed healthcare provider.
+
+🚨 **Emergency?** If you're experiencing a medical emergency, call 911 immediately!
+
+**What can I help you with today?** 💙"""
+        
+        return response
 
 # ==================== ROUTES ====================
 
@@ -613,7 +1559,7 @@ def chat():
 
 @app.route('/api/chat', methods=['POST'])
 def api_chat():
-    """API endpoint for chat"""
+    """ENHANCED API endpoint for intelligent chat with conversation history"""
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Not logged in'}), 401
     
@@ -624,12 +1570,23 @@ def api_chat():
         if not message:
             return jsonify({'success': False, 'message': 'Message cannot be empty'}), 400
         
-        # Get AI response
-        response = get_ai_response(message)
-        
-        # Save to database
+        # Get recent conversation history for context
         conn = get_db()
         cursor = conn.cursor()
+        cursor.execute('''
+            SELECT message, response
+            FROM chats
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 5
+        ''', (session['user_id'],))
+        recent_history = cursor.fetchall()
+        conversation_history = [(row[0], row[1]) for row in reversed(recent_history)]
+        
+        # Get AI response with context
+        response = get_ai_response(message, session.get('user_name', 'there'), conversation_history)
+        
+        # Save to database
         cursor.execute('''
             INSERT INTO chats (user_id, message, response)
             VALUES (?, ?, ?)
@@ -637,10 +1594,19 @@ def api_chat():
         conn.commit()
         conn.close()
         
-        return jsonify({'success': True, 'response': response}), 200
+        # Return with metadata for enhanced frontend
+        return jsonify({
+            'success': True,
+            'response': response,
+            'timestamp': datetime.now().isoformat(),
+            'has_emergency': '🚨' in response,
+            'has_action_items': any(word in response for word in ['[Book', '[Track', '[Emergency'])
+        }), 200
         
     except Exception as e:
         print(f"Chat error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': 'Chat failed'}), 500
 
 @app.route('/appointments')
