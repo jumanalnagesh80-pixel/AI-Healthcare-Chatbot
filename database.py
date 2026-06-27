@@ -122,6 +122,148 @@ class HealthcareDatabase:
                 )
             """)
             
+            # Prescriptions table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS prescriptions (
+                    prescription_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    patient_id INTEGER NOT NULL,
+                    doctor_name TEXT NOT NULL,
+                    medication_name TEXT NOT NULL,
+                    dosage TEXT NOT NULL,
+                    frequency TEXT NOT NULL,
+                    duration_days INTEGER NOT NULL,
+                    instructions TEXT,
+                    start_date DATE NOT NULL,
+                    end_date DATE,
+                    status TEXT DEFAULT 'Active',
+                    refills_remaining INTEGER DEFAULT 0,
+                    side_effects TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+                )
+            """)
+            
+            # Lab reports table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS lab_reports (
+                    report_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    patient_id INTEGER NOT NULL,
+                    report_type TEXT NOT NULL,
+                    test_name TEXT NOT NULL,
+                    test_date DATE NOT NULL,
+                    result_value TEXT,
+                    normal_range TEXT,
+                    status TEXT DEFAULT 'Normal',
+                    notes TEXT,
+                    uploaded_by INTEGER,
+                    file_path TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
+                    FOREIGN KEY (uploaded_by) REFERENCES users(user_id)
+                )
+            """)
+            
+            # Vital signs table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS vital_signs (
+                    vital_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    patient_id INTEGER NOT NULL,
+                    blood_pressure_systolic INTEGER,
+                    blood_pressure_diastolic INTEGER,
+                    heart_rate INTEGER,
+                    temperature REAL,
+                    oxygen_saturation INTEGER,
+                    glucose_level INTEGER,
+                    weight REAL,
+                    height REAL,
+                    bmi REAL,
+                    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    notes TEXT,
+                    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+                )
+            """)
+            
+            # Video consultations table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS consultations (
+                    consultation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    patient_id INTEGER NOT NULL,
+                    doctor_id INTEGER,
+                    appointment_id INTEGER,
+                    consultation_date DATE NOT NULL,
+                    consultation_time TEXT NOT NULL,
+                    duration_minutes INTEGER DEFAULT 30,
+                    meeting_link TEXT,
+                    status TEXT DEFAULT 'Scheduled',
+                    notes TEXT,
+                    recording_path TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
+                    FOREIGN KEY (doctor_id) REFERENCES users(user_id),
+                    FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id)
+                )
+            """)
+            
+            # Doctors table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS doctors (
+                    doctor_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    full_name TEXT NOT NULL,
+                    specialty TEXT NOT NULL,
+                    qualification TEXT NOT NULL,
+                    experience_years INTEGER,
+                    license_number TEXT UNIQUE,
+                    phone TEXT,
+                    email TEXT,
+                    consultation_fee REAL,
+                    rating REAL DEFAULT 0.0,
+                    total_reviews INTEGER DEFAULT 0,
+                    available_days TEXT,
+                    bio TEXT,
+                    profile_image TEXT,
+                    is_active INTEGER DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(user_id)
+                )
+            """)
+            
+            # Insurance table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS insurance (
+                    insurance_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    patient_id INTEGER NOT NULL,
+                    provider_name TEXT NOT NULL,
+                    policy_number TEXT NOT NULL,
+                    group_number TEXT,
+                    coverage_type TEXT,
+                    start_date DATE,
+                    end_date DATE,
+                    status TEXT DEFAULT 'Active',
+                    copay_amount REAL,
+                    deductible REAL,
+                    notes TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+                )
+            """)
+            
+            # Emergency contacts table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS emergency_contacts (
+                    contact_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    patient_id INTEGER NOT NULL,
+                    contact_name TEXT NOT NULL,
+                    relationship TEXT NOT NULL,
+                    phone TEXT NOT NULL,
+                    email TEXT,
+                    address TEXT,
+                    is_primary INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+                )
+            """)
+            
             self.connection.commit()
             print("✓ Database tables created successfully")
             
@@ -605,6 +747,297 @@ class HealthcareDatabase:
         except sqlite3.Error as e:
             print(f"Error deleting patient: {e}")
             return False
+    
+    # ===== PRESCRIPTION OPERATIONS =====
+    
+    def add_prescription(self, patient_id: int, doctor_name: str, medication_name: str,
+                        dosage: str, frequency: str, duration_days: int, instructions: str = "",
+                        start_date: str = None, refills: int = 0, side_effects: str = "") -> Optional[int]:
+        """Add a new prescription"""
+        try:
+            if not start_date:
+                start_date = datetime.now().strftime("%Y-%m-%d")
+            
+            from datetime import datetime, timedelta
+            end_date = (datetime.strptime(start_date, "%Y-%m-%d") + 
+                       timedelta(days=duration_days)).strftime("%Y-%m-%d")
+            
+            self.cursor.execute("""
+                INSERT INTO prescriptions (patient_id, doctor_name, medication_name, dosage, 
+                                         frequency, duration_days, instructions, start_date, 
+                                         end_date, refills_remaining, side_effects)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (patient_id, doctor_name, medication_name, dosage, frequency, duration_days,
+                  instructions, start_date, end_date, refills, side_effects))
+            self.connection.commit()
+            
+            self.log_activity(None, "prescription_added", 
+                            f"Prescription added for patient ID {patient_id}: {medication_name}")
+            
+            return self.cursor.lastrowid
+        except sqlite3.Error as e:
+            print(f"Error adding prescription: {e}")
+            return None
+    
+    def get_patient_prescriptions(self, patient_id: int, active_only: bool = False) -> List[Dict]:
+        """Get all prescriptions for a patient"""
+        try:
+            if active_only:
+                self.cursor.execute("""
+                    SELECT * FROM prescriptions 
+                    WHERE patient_id = ? AND status = 'Active'
+                    ORDER BY start_date DESC
+                """, (patient_id,))
+            else:
+                self.cursor.execute("""
+                    SELECT * FROM prescriptions 
+                    WHERE patient_id = ?
+                    ORDER BY start_date DESC
+                """, (patient_id,))
+            
+            rows = self.cursor.fetchall()
+            prescriptions = []
+            for row in rows:
+                prescriptions.append({
+                    "prescription_id": row[0],
+                    "medication_name": row[3],
+                    "dosage": row[4],
+                    "frequency": row[5],
+                    "duration_days": row[6],
+                    "instructions": row[7],
+                    "start_date": row[8],
+                    "end_date": row[9],
+                    "status": row[10],
+                    "refills_remaining": row[11],
+                    "doctor_name": row[2]
+                })
+            return prescriptions
+        except sqlite3.Error as e:
+            print(f"Error retrieving prescriptions: {e}")
+            return []
+    
+    def update_prescription_status(self, prescription_id: int, status: str) -> bool:
+        """Update prescription status"""
+        try:
+            self.cursor.execute("""
+                UPDATE prescriptions SET status = ? WHERE prescription_id = ?
+            """, (status, prescription_id))
+            self.connection.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Error updating prescription: {e}")
+            return False
+    
+    # ===== LAB REPORT OPERATIONS =====
+    
+    def add_lab_report(self, patient_id: int, report_type: str, test_name: str,
+                      test_date: str, result_value: str = "", normal_range: str = "",
+                      status: str = "Normal", notes: str = "", file_path: str = "") -> Optional[int]:
+        """Add a new lab report"""
+        try:
+            self.cursor.execute("""
+                INSERT INTO lab_reports (patient_id, report_type, test_name, test_date,
+                                        result_value, normal_range, status, notes, file_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (patient_id, report_type, test_name, test_date, result_value, 
+                  normal_range, status, notes, file_path))
+            self.connection.commit()
+            
+            self.log_activity(None, "lab_report_added", 
+                            f"Lab report added for patient ID {patient_id}: {test_name}")
+            
+            return self.cursor.lastrowid
+        except sqlite3.Error as e:
+            print(f"Error adding lab report: {e}")
+            return None
+    
+    def get_patient_lab_reports(self, patient_id: int) -> List[Dict]:
+        """Get all lab reports for a patient"""
+        try:
+            self.cursor.execute("""
+                SELECT * FROM lab_reports 
+                WHERE patient_id = ?
+                ORDER BY test_date DESC
+            """, (patient_id,))
+            
+            rows = self.cursor.fetchall()
+            reports = []
+            for row in rows:
+                reports.append({
+                    "report_id": row[0],
+                    "report_type": row[2],
+                    "test_name": row[3],
+                    "test_date": row[4],
+                    "result_value": row[5],
+                    "normal_range": row[6],
+                    "status": row[7],
+                    "notes": row[8],
+                    "created_at": row[11]
+                })
+            return reports
+        except sqlite3.Error as e:
+            print(f"Error retrieving lab reports: {e}")
+            return []
+    
+    # ===== VITAL SIGNS OPERATIONS =====
+    
+    def add_vital_signs(self, patient_id: int, bp_systolic: int = None, bp_diastolic: int = None,
+                       heart_rate: int = None, temperature: float = None, oxygen_sat: int = None,
+                       glucose: int = None, weight: float = None, height: float = None,
+                       notes: str = "") -> Optional[int]:
+        """Add vital signs record"""
+        try:
+            # Calculate BMI if height and weight provided
+            bmi = None
+            if height and weight and height > 0:
+                bmi = round(weight / ((height/100) ** 2), 2)
+            
+            self.cursor.execute("""
+                INSERT INTO vital_signs (patient_id, blood_pressure_systolic, blood_pressure_diastolic,
+                                        heart_rate, temperature, oxygen_saturation, glucose_level,
+                                        weight, height, bmi, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (patient_id, bp_systolic, bp_diastolic, heart_rate, temperature,
+                  oxygen_sat, glucose, weight, height, bmi, notes))
+            self.connection.commit()
+            return self.cursor.lastrowid
+        except sqlite3.Error as e:
+            print(f"Error adding vital signs: {e}")
+            return None
+    
+    def get_patient_vital_signs(self, patient_id: int, limit: int = 30) -> List[Dict]:
+        """Get vital signs history for a patient"""
+        try:
+            self.cursor.execute("""
+                SELECT * FROM vital_signs 
+                WHERE patient_id = ?
+                ORDER BY recorded_at DESC
+                LIMIT ?
+            """, (patient_id, limit))
+            
+            rows = self.cursor.fetchall()
+            vitals = []
+            for row in rows:
+                vitals.append({
+                    "vital_id": row[0],
+                    "bp_systolic": row[2],
+                    "bp_diastolic": row[3],
+                    "heart_rate": row[4],
+                    "temperature": row[5],
+                    "oxygen_saturation": row[6],
+                    "glucose_level": row[7],
+                    "weight": row[8],
+                    "height": row[9],
+                    "bmi": row[10],
+                    "recorded_at": row[11],
+                    "notes": row[12]
+                })
+            return vitals
+        except sqlite3.Error as e:
+            print(f"Error retrieving vital signs: {e}")
+            return []
+    
+    # ===== DOCTOR OPERATIONS =====
+    
+    def add_doctor(self, full_name: str, specialty: str, qualification: str,
+                  experience_years: int, license_number: str, phone: str = "",
+                  email: str = "", consultation_fee: float = 0.0, available_days: str = "",
+                  bio: str = "") -> Optional[int]:
+        """Add a new doctor"""
+        try:
+            self.cursor.execute("""
+                INSERT INTO doctors (full_name, specialty, qualification, experience_years,
+                                    license_number, phone, email, consultation_fee, 
+                                    available_days, bio)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (full_name, specialty, qualification, experience_years, license_number,
+                  phone, email, consultation_fee, available_days, bio))
+            self.connection.commit()
+            return self.cursor.lastrowid
+        except sqlite3.Error as e:
+            print(f"Error adding doctor: {e}")
+            return None
+    
+    def get_all_doctors(self, specialty: str = None) -> List[Dict]:
+        """Get all doctors, optionally filtered by specialty"""
+        try:
+            if specialty:
+                self.cursor.execute("""
+                    SELECT * FROM doctors 
+                    WHERE specialty = ? AND is_active = 1
+                    ORDER BY rating DESC
+                """, (specialty,))
+            else:
+                self.cursor.execute("""
+                    SELECT * FROM doctors 
+                    WHERE is_active = 1
+                    ORDER BY rating DESC
+                """)
+            
+            rows = self.cursor.fetchall()
+            doctors = []
+            for row in rows:
+                doctors.append({
+                    "doctor_id": row[0],
+                    "full_name": row[2],
+                    "specialty": row[3],
+                    "qualification": row[4],
+                    "experience_years": row[5],
+                    "phone": row[7],
+                    "email": row[8],
+                    "consultation_fee": row[9],
+                    "rating": row[10],
+                    "total_reviews": row[11],
+                    "bio": row[13]
+                })
+            return doctors
+        except sqlite3.Error as e:
+            print(f"Error retrieving doctors: {e}")
+            return []
+    
+    # ===== EMERGENCY CONTACT OPERATIONS =====
+    
+    def add_emergency_contact(self, patient_id: int, contact_name: str, relationship: str,
+                             phone: str, email: str = "", address: str = "",
+                             is_primary: int = 0) -> Optional[int]:
+        """Add emergency contact for patient"""
+        try:
+            self.cursor.execute("""
+                INSERT INTO emergency_contacts (patient_id, contact_name, relationship,
+                                               phone, email, address, is_primary)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (patient_id, contact_name, relationship, phone, email, address, is_primary))
+            self.connection.commit()
+            return self.cursor.lastrowid
+        except sqlite3.Error as e:
+            print(f"Error adding emergency contact: {e}")
+            return None
+    
+    def get_patient_emergency_contacts(self, patient_id: int) -> List[Dict]:
+        """Get emergency contacts for a patient"""
+        try:
+            self.cursor.execute("""
+                SELECT * FROM emergency_contacts 
+                WHERE patient_id = ?
+                ORDER BY is_primary DESC, contact_name
+            """, (patient_id,))
+            
+            rows = self.cursor.fetchall()
+            contacts = []
+            for row in rows:
+                contacts.append({
+                    "contact_id": row[0],
+                    "contact_name": row[2],
+                    "relationship": row[3],
+                    "phone": row[4],
+                    "email": row[5],
+                    "address": row[6],
+                    "is_primary": row[7]
+                })
+            return contacts
+        except sqlite3.Error as e:
+            print(f"Error retrieving emergency contacts: {e}")
+            return []
     
     # ===== ACTIVITY LOG OPERATIONS =====
     

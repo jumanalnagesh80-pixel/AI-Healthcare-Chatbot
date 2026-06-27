@@ -18,6 +18,7 @@ from chatbot_engine import chatbot
 import config
 import auth
 import utils
+from advanced_ai import medical_ai
 
 # Page configuration
 st.set_page_config(
@@ -294,7 +295,50 @@ def process_message(user_input: str):
         "current_patient": st.session_state.current_patient,
         "user": auth.get_current_user()
     }
-    response, intent = chatbot.process_message(user_input, session_context)
+    
+    # Use advanced AI for better symptom analysis
+    if any(keyword in user_input.lower() for keyword in ['symptom', 'pain', 'hurt', 'sick', 'feel']):
+        try:
+            symptoms = chatbot._extract_symptoms(user_input)
+            if symptoms:
+                ai_analysis = medical_ai.analyze_symptoms(
+                    symptoms,
+                    st.session_state.current_patient if st.session_state.current_patient else {}
+                )
+                
+                # Enhanced response with AI analysis
+                enhanced_response = f"""
+**AI-Powered Symptom Analysis:**
+
+**Symptoms detected:** {', '.join(symptoms)}
+**Severity:** {ai_analysis['severity']}
+**Confidence:** {ai_analysis['confidence']}%
+
+**Possible Conditions:**
+"""
+                if ai_analysis['possible_conditions']:
+                    for condition in ai_analysis['possible_conditions'][:3]:
+                        enhanced_response += f"- {condition['condition']} (Confidence: {condition['confidence']:.1f}%)\n"
+                
+                enhanced_response += f"""
+**Recommendations:**
+"""
+                for rec in ai_analysis['recommendations']:
+                    enhanced_response += f"- {rec}\n"
+                
+                enhanced_response += f"""
+**Specialist Referral:** {ai_analysis['specialist_referral']}
+
+{config.MEDICAL_DISCLAIMER}
+"""
+                response = enhanced_response
+                intent = "symptom_check_advanced"
+            else:
+                response, intent = chatbot.process_message(user_input, session_context)
+        except Exception as e:
+            response, intent = chatbot.process_message(user_input, session_context)
+    else:
+        response, intent = chatbot.process_message(user_input, session_context)
 
     
     # Add bot response to history
