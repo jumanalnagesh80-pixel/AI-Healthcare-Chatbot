@@ -335,30 +335,30 @@ def generate_suggestions(intent):
 @app.route('/')
 def index():
     """Landing page"""
-    return render_template('index_modern.html')
+    return render_template('index_enhanced.html')
 
 @app.route('/login')
 def login():
     """Login/Register page"""
-    return render_template('login_modern.html')
+    return render_template('login_enhanced.html')
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
     """Dashboard page"""
-    return render_template('dashboard_modern.html')
+    return render_template('dashboard_enhanced.html')
 
 @app.route('/chat')
 @login_required
 def chat():
     """AI Chat page"""
-    return render_template('chat_modern.html')
+    return render_template('chat_enhanced.html')
 
 @app.route('/appointments')
 @login_required
 def appointments():
     """Appointments page"""
-    return render_template('appointments_modern.html')
+    return render_template('appointments_enhanced.html')
 
 @app.route('/prescriptions')
 @login_required
