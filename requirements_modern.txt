@@ -25,7 +25,8 @@ asyncio  # Built-in with Python 3.7+
 # Utilities
 python-dotenv==1.0.0
 
-# Testing (for later)
+# Testing
 pytest==7.4.0
 pytest-flask==1.2.0
 pytest-cov==4.1.0
+pytest-mock==3.12.0

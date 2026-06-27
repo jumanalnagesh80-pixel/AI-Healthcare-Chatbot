@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Goals - HealthAI</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <link rel="stylesheet" href="/static/css/modern.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: var(--space-6);
+            margin-top: var(--space-6);
+        }
+        
+        .goal-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            border: 1px solid var(--border-light);
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .goal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--bg-medical);
+        }
+        
+        .goal-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+        }
+        
+        .goal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+        }
+        
+        .goal-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: var(--primary-50);
+            color: var(--primary-600);
+        }
+        
+        .goal-status {
+            display: flex;
+            gap: var(--space-2);
+        }
+        
+        .goal-body h3 {
+            font-size: 1.25rem;
+            margin-bottom: var(--space-2);
+        }
+        
+        .goal-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: var(--space-4);
+        }
+        
+        .goal-progress {
+            margin-top: var(--space-4);
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            margin-bottom: var(--space-2);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--bg-medical);
+            border-radius: var(--radius-full);
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .goal-meta {
+            display: flex;
+            gap: var(--space-4);
+            margin-top: var(--space-4);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--border-light);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .goal-meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .goal-actions {
+            display: flex;
+            gap: var(--space-2);
+            margin-top: var(--space-4);
+        }
+        
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        
+        .stat-box {
+            background: var(--bg-primary);
+            padding: var(--space-5);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-light);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-600);
+            font-family: var(--font-display);
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: var(--space-2);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: var(--space-12) var(--space-6);
+        }
+        
+        .empty-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto var(--space-6);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-2xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--text-tertiary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <div class="logo">
+                    <img src="/static/images/logo.svg" alt="HealthAI" style="width: 45px; height: 45px;">
+                </div>
+                <span style="background: linear-gradient(135deg, #0ea5e9 0%, #0d9488 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">HealthAI</span>
+            </div>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/chat" class="nav-link">
+                    <i class="fas fa-comments"></i>
+                    <span>AI Chat</span>
+                </a>
+                <a href="/appointments" class="nav-link">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="/health-goals" class="nav-link active">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Goals</span>
+                </a>
+            </div>
+            <div class="nav-actions">
+                <button class="icon-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <div class="user-menu">
+                    <button class="user-btn" id="userMenuBtn">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <span class="user-name" id="userName">Loading...</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="/dashboard" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Profile</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Page Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
+                <div>
+                    <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">Health Goals</h1>
+                    <p style="color: var(--text-secondary);">Track your health journey and achieve your wellness goals</p>
+                </div>
+                <button class="btn btn-primary" id="createGoalBtn">
+                    <i class="fas fa-plus"></i>
+                    <span>New Goal</span>
+                </button>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="stats-summary">
+                <div class="stat-box">
+                    <div class="stat-number" id="activeGoals">0</div>
+                    <div class="stat-label">Active Goals</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="completedGoals">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="avgProgress">0%</div>
+                    <div class="stat-label">Avg Progress</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="streakDays">0</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+            </div>
+
+            <!-- Goals Grid -->
+            <div id="goalsContainer">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h2>No health goals yet</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+                        Start your wellness journey by setting your first health goal
+                    </p>
+                    <button class="btn btn-primary" onclick="document.getElementById('createGoalBtn').click()">
+                        <i class="fas fa-plus"></i>
+                        Create Your First Goal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Goal Modal -->
+    <div class="modal" id="createGoalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Health Goal</h3>
+                <button class="modal-close" onclick="closeModal('createGoalModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createGoalForm">
+                    <div class="form-group">
+                        <label class="form-label">Goal Type</label>
+                        <select class="form-input" id="goalType" required>
+                            <option value="">Select type...</option>
+                            <option value="weight_loss">Weight Loss</option>
+                            <option value="exercise">Exercise</option>
+                            <option value="nutrition">Nutrition</option>
+                            <option value="sleep">Sleep</option>
+                            <option value="hydration">Hydration</option>
+                            <option value="meditation">Meditation</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Goal Title</label>
+                        <input type="text" class="form-input" id="goalTitle" placeholder="e.g., Lose 10 pounds" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-input" id="goalDescription" rows="3" placeholder="Describe your goal..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label">Current Value</label>
+                            <input type="number" class="form-input" id="currentValue" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Target Value</label>
+                            <input type="number" class="form-input" id="targetValue" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Unit</label>
+                            <input type="text" class="form-input" id="unit" placeholder="lbs, mins, cups" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Target Date</label>
+                        <input type="date" class="form-input" id="targetDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select class="form-input" id="priority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('createGoalModal')">Cancel</button>
+                <button class="btn btn-primary" id="submitGoalBtn">Create Goal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Progress Modal -->
+    <div class="modal" id="updateProgressModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Update Progress</h3>
+                <button class="modal-close" onclick="closeModal('updateProgressModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="updateProgressForm">
+                    <input type="hidden" id="progressGoalId">
+                    <div class="form-group">
+                        <label class="form-label">Current Value</label>
+                        <input type="number" class="form-input" id="progressValue" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes (Optional)</label>
+                        <textarea class="form-input" id="progressNotes" rows="3" placeholder="How are you feeling? Any challenges?"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('updateProgressModal')">Cancel</button>
+                <button class="btn btn-primary" id="submitProgressBtn">Update Progress</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/enhanced.js"></script>
+    <script>
+        let goals = [];
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check auth
+            try {
+                const authResult = await API.auth.checkAuth();
+                if (!authResult.authenticated) {
+                    window.location.href = '/login';
+                    return;
+                }
+                document.getElementById('userName').textContent = authResult.user.name;
+            } catch (error) {
+                window.location.href = '/login';
+                return;
+            }
+
+            await loadGoals();
+            initializeUI();
+        });
+
+        async function loadGoals() {
+            try {
+                const result = await API.healthGoals.list();
+                goals = result.goals || [];
+                
+                displayGoals();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading goals:', error);
+                showToast('Failed to load goals', 'danger');
+            }
+        }
+
+        function displayGoals() {
+            const container = document.getElementById('goalsContainer');
+            
+            if (goals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-bullseye"></i></div>
+                        <h2>No health goals yet</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+                            Start your wellness journey by setting your first health goal
+                        </p>
+                        <button class="btn btn-primary" onclick="document.getElementById('createGoalBtn').click()">
+                            <i class="fas fa-plus"></i> Create Your First Goal
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const goalsHTML = goals.map(goal => {
+                const progress = Math.round(((goal.current_value - (goal.target_value > goal.current_value ? 0 : goal.target_value)) / (goal.target_value - (goal.target_value > goal.current_value ? 0 : goal.target_value))) * 100);
+                const icon = getGoalIcon(goal.goal_type);
+                
+                return `
+                    <div class="goal-card">
+                        <div class="goal-header">
+                            <div class="goal-icon">${icon}</div>
+                            <div class="goal-status">
+                                <span class="badge badge-${goal.priority === 'high' ? 'danger' : goal.priority === 'medium' ? 'warning' : 'info'}">${goal.priority}</span>
+                                <span class="badge badge-success">${goal.status}</span>
+                            </div>
+                        </div>
+                        <div class="goal-body">
+                            <h3>${goal.title}</h3>
+                            <p class="goal-description">${goal.description || 'No description'}</p>
+                            <div class="goal-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${Math.min(progress, 100)}%"></div>
+                                </div>
+                                <div class="progress-text">
+                                    <span>${goal.current_value} ${goal.unit}</span>
+                                    <span><strong>${Math.min(progress, 100)}%</strong></span>
+                                    <span>${goal.target_value} ${goal.unit}</span>
+                                </div>
+                            </div>
+                            <div class="goal-meta">
+                                <div class="goal-meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Target: ${new Date(goal.target_date).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                            <div class="goal-actions">
+                                <button class="btn btn-primary btn-sm" onclick="updateProgress(${goal.id})">
+                                    <i class="fas fa-chart-line"></i> Update Progress
+                                </button>
+                                <button class="btn btn-outline btn-sm" onclick="deleteGoal(${goal.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `<div class="goals-grid">${goalsHTML}</div>`;
+        }
+
+        function getGoalIcon(type) {
+            const icons = {
+                weight_loss: '<i class="fas fa-weight"></i>',
+                exercise: '<i class="fas fa-running"></i>',
+                nutrition: '<i class="fas fa-apple-alt"></i>',
+                sleep: '<i class="fas fa-bed"></i>',
+                hydration: '<i class="fas fa-glass-water"></i>',
+                meditation: '<i class="fas fa-spa"></i>',
+                custom: '<i class="fas fa-bullseye"></i>'
+            };
+            return icons[type] || icons.custom;
+        }
+
+        function updateStats() {
+            const active = goals.filter(g => g.status === 'active').length;
+            const completed = goals.filter(g => g.status === 'completed').length;
+            const avgProgress = goals.length > 0 ? 
+                Math.round(goals.reduce((sum, g) => sum + ((g.current_value / g.target_value) * 100), 0) / goals.length) : 0;
+
+            document.getElementById('activeGoals').textContent = active;
+            document.getElementById('completedGoals').textContent = completed;
+            document.getElementById('avgProgress').textContent = avgProgress + '%';
+            document.getElementById('streakDays').textContent = Math.floor(Math.random() * 15);
+        }
+
+        function updateProgress(goalId) {
+            const goal = goals.find(g => g.id === goalId);
+            if (!goal) return;
+
+            document.getElementById('progressGoalId').value = goalId;
+            document.getElementById('progressValue').value = goal.current_value;
+            openModal('updateProgressModal');
+        }
+
+        async function deleteGoal(goalId) {
+            if (!confirm('Are you sure you want to delete this goal?')) return;
+
+            try {
+                await API.healthGoals.delete(goalId);
+                goals = goals.filter(g => g.id !== goalId);
+                displayGoals();
+                updateStats();
+                showToast('Goal deleted successfully', 'success');
+            } catch (error) {
+                console.error('Error deleting goal:', error);
+                showToast('Failed to delete goal', 'danger');
+            }
+        }
+
+        function initializeUI() {
+            // Create goal button
+            document.getElementById('createGoalBtn').addEventListener('click', () => {
+                openModal('createGoalModal');
+                // Set min date to today
+                document.getElementById('targetDate').min = new Date().toISOString().split('T')[0];
+            });
+
+            // Submit create goal
+            document.getElementById('submitGoalBtn').addEventListener('click', async () => {
+                const form = document.getElementById('createGoalForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const newGoal = {
+                    id: Date.now(),
+                    goal_type: document.getElementById('goalType').value,
+                    title: document.getElementById('goalTitle').value,
+                    description: document.getElementById('goalDescription').value,
+                    current_value: parseFloat(document.getElementById('currentValue').value),
+                    target_value: parseFloat(document.getElementById('targetValue').value),
+                    unit: document.getElementById('unit').value,
+                    target_date: document.getElementById('targetDate').value,
+                    status: 'active',
+                    priority: document.getElementById('priority').value
+                };
+
+                try {
+                    await API.healthGoals.create(newGoal);
+                    await loadGoals();  // Reload from server
+                    closeModal('createGoalModal');
+                    form.reset();
+                    showToast('Goal created successfully!', 'success');
+                } catch (error) {
+                    console.error('Error creating goal:', error);
+                    showToast('Failed to create goal', 'danger');
+                }
+            });
+
+            // Submit progress update
+            document.getElementById('submitProgressBtn').addEventListener('click', async () => {
+                const goalId = parseInt(document.getElementById('progressGoalId').value);
+                const newValue = parseFloat(document.getElementById('progressValue').value);
+                const notes = document.getElementById('progressNotes').value;
+
+                try {
+                    await API.healthGoals.addProgress(goalId, { value: newValue, notes });
+                    await loadGoals();  // Reload from server
+                    closeModal('updateProgressModal');
+                    showToast('Progress updated!', 'success');
+                } catch (error) {
+                    console.error('Error updating progress:', error);
+                    showToast('Failed to update progress', 'danger');
+                }
+            });
+
+            // User menu
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            userMenuBtn.addEventListener('click', () => {
+                userDropdown.classList.toggle('show');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!userMenuBtn.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+                e.preventDefault();
+                try {
+                    await API.auth.logout();
+                    showToast('Logged out successfully', 'success');
+                    setTimeout(() => window.location.href = '/login', 1000);
+                } catch (error) {
+                    window.location.href = '/login';
+                }
+            });
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+    </script>
+</body>
+</html>

@@ -127,6 +127,22 @@ const API = {
     // Activity logs
     activityLogs: {
         list: (limit) => API.request(`/api/activity-logs?limit=${limit || 100}`)
+    },
+    
+    // Health Goals
+    healthGoals: {
+        list: () => API.request('/api/health-goals'),
+        create: (data) => API.request('/api/health-goals', { method: 'POST', body: data }),
+        update: (id, data) => API.request(`/api/health-goals/${id}`, { method: 'PUT', body: data }),
+        delete: (id) => API.request(`/api/health-goals/${id}`, { method: 'DELETE' }),
+        addProgress: (id, data) => API.request(`/api/health-goals/${id}/progress`, { method: 'POST', body: data }),
+        getProgress: (id) => API.request(`/api/health-goals/${id}/progress`)
+    },
+    
+    // Admin endpoints
+    admin: {
+        getUsers: () => API.request('/api/admin/users'),
+        getStats: () => API.request('/api/admin/stats')
     }
 };
 

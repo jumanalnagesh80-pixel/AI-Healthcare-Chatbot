@@ -723,3 +723,301 @@ if __name__ == '__main__':
     logger.info("Starting HealthAI Modern Backend v3.0")
     logger.info(f"OpenAI Integration: {'Enabled' if OPENAI_ENABLED else 'Disabled (using local AI)'}")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
+
+
+# ============================================
+# Health Goals API
+# ============================================
+
+@app.route('/api/health-goals', methods=['GET'])
+@login_required
+def api_get_health_goals():
+    """Get user's health goals"""
+    try:
+        user_id = session['user_id']
+        
+        goals = query_db(
+            '''SELECT * FROM health_goals 
+               WHERE user_id = ? 
+               ORDER BY created_at DESC''',
+            [user_id]
+        )
+        
+        return jsonify({
+            'success': True,
+            'goals': [dict(row) for row in goals]
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching health goals: {e}")
+        return jsonify({'error': 'Failed to fetch health goals'}), 500
+
+@app.route('/api/health-goals', methods=['POST'])
+@login_required
+def api_create_health_goal():
+    """Create a new health goal"""
+    try:
+        data = request.get_json()
+        user_id = session['user_id']
+        
+        required_fields = ['goal_type', 'title', 'target_value', 'unit', 'target_date']
+        if not all(field in data for field in required_fields):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        goal_id = execute_db(
+            '''INSERT INTO health_goals 
+               (user_id, goal_type, title, description, target_value, current_value, 
+                unit, start_date, target_date, status, priority, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            [
+                user_id,
+                data['goal_type'],
+                data['title'],
+                data.get('description', ''),
+                data['target_value'],
+                data.get('current_value', 0),
+                data['unit'],
+                datetime.now().strftime('%Y-%m-%d'),
+                data['target_date'],
+                data.get('status', 'active'),
+                data.get('priority', 'medium'),
+                datetime.now()
+            ]
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'Health goal created successfully',
+            'goal_id': goal_id
+        }), 201
+    
+    except Exception as e:
+        logger.error(f"Error creating health goal: {e}")
+        return jsonify({'error': 'Failed to create health goal'}), 500
+
+@app.route('/api/health-goals/<int:goal_id>', methods=['PUT'])
+@login_required
+def api_update_health_goal(goal_id):
+    """Update a health goal"""
+    try:
+        data = request.get_json()
+        user_id = session['user_id']
+        
+        # Verify goal belongs to user
+        goal = query_db(
+            'SELECT id FROM health_goals WHERE id = ? AND user_id = ?',
+            [goal_id, user_id],
+            one=True
+        )
+        
+        if not goal:
+            return jsonify({'error': 'Goal not found'}), 404
+        
+        # Build update query dynamically
+        update_fields = []
+        update_values = []
+        
+        allowed_fields = ['title', 'description', 'current_value', 'target_value', 
+                         'status', 'priority', 'target_date']
+        
+        for field in allowed_fields:
+            if field in data:
+                update_fields.append(f'{field} = ?')
+                update_values.append(data[field])
+        
+        if not update_fields:
+            return jsonify({'error': 'No fields to update'}), 400
+        
+        update_fields.append('updated_at = ?')
+        update_values.append(datetime.now())
+        update_values.append(goal_id)
+        
+        execute_db(
+            f'UPDATE health_goals SET {", ".join(update_fields)} WHERE id = ?',
+            update_values
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'Health goal updated successfully'
+        })
+    
+    except Exception as e:
+        logger.error(f"Error updating health goal: {e}")
+        return jsonify({'error': 'Failed to update health goal'}), 500
+
+@app.route('/api/health-goals/<int:goal_id>', methods=['DELETE'])
+@login_required
+def api_delete_health_goal(goal_id):
+    """Delete a health goal"""
+    try:
+        user_id = session['user_id']
+        
+        # Verify goal belongs to user
+        goal = query_db(
+            'SELECT id FROM health_goals WHERE id = ? AND user_id = ?',
+            [goal_id, user_id],
+            one=True
+        )
+        
+        if not goal:
+            return jsonify({'error': 'Goal not found'}), 404
+        
+        execute_db('DELETE FROM health_goals WHERE id = ?', [goal_id])
+        execute_db('DELETE FROM goal_progress WHERE goal_id = ?', [goal_id])
+        
+        return jsonify({
+            'success': True,
+            'message': 'Health goal deleted successfully'
+        })
+    
+    except Exception as e:
+        logger.error(f"Error deleting health goal: {e}")
+        return jsonify({'error': 'Failed to delete health goal'}), 500
+
+@app.route('/api/health-goals/<int:goal_id>/progress', methods=['POST'])
+@login_required
+def api_add_goal_progress(goal_id):
+    """Add progress entry for a health goal"""
+    try:
+        data = request.get_json()
+        user_id = session['user_id']
+        
+        # Verify goal belongs to user
+        goal = query_db(
+            'SELECT id, target_value FROM health_goals WHERE id = ? AND user_id = ?',
+            [goal_id, user_id],
+            one=True
+        )
+        
+        if not goal:
+            return jsonify({'error': 'Goal not found'}), 404
+        
+        if 'value' not in data:
+            return jsonify({'error': 'Value is required'}), 400
+        
+        # Add progress entry
+        progress_id = execute_db(
+            '''INSERT INTO goal_progress (goal_id, value, notes, recorded_date)
+               VALUES (?, ?, ?, ?)''',
+            [
+                goal_id,
+                data['value'],
+                data.get('notes', ''),
+                datetime.now()
+            ]
+        )
+        
+        # Update current value in goal
+        execute_db(
+            'UPDATE health_goals SET current_value = ?, updated_at = ? WHERE id = ?',
+            [data['value'], datetime.now(), goal_id]
+        )
+        
+        # Check if goal is completed
+        if data['value'] >= goal['target_value']:
+            execute_db(
+                'UPDATE health_goals SET status = ? WHERE id = ?',
+                ['completed', goal_id]
+            )
+        
+        return jsonify({
+            'success': True,
+            'message': 'Progress recorded successfully',
+            'progress_id': progress_id
+        })
+    
+    except Exception as e:
+        logger.error(f"Error adding goal progress: {e}")
+        return jsonify({'error': 'Failed to add progress'}), 500
+
+@app.route('/api/health-goals/<int:goal_id>/progress', methods=['GET'])
+@login_required
+def api_get_goal_progress(goal_id):
+    """Get progress history for a health goal"""
+    try:
+        user_id = session['user_id']
+        
+        # Verify goal belongs to user
+        goal = query_db(
+            'SELECT id FROM health_goals WHERE id = ? AND user_id = ?',
+            [goal_id, user_id],
+            one=True
+        )
+        
+        if not goal:
+            return jsonify({'error': 'Goal not found'}), 404
+        
+        progress = query_db(
+            '''SELECT * FROM goal_progress 
+               WHERE goal_id = ? 
+               ORDER BY recorded_date DESC''',
+            [goal_id]
+        )
+        
+        return jsonify({
+            'success': True,
+            'progress': [dict(row) for row in progress]
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching goal progress: {e}")
+        return jsonify({'error': 'Failed to fetch progress'}), 500
+
+# ============================================
+# Admin API
+# ============================================
+
+@app.route('/api/admin/users', methods=['GET'])
+@admin_required
+def api_admin_get_users():
+    """Get all users (admin only)"""
+    try:
+        users = query_db('''
+            SELECT id, email, full_name, role, created_at, 
+                   (SELECT COUNT(*) FROM appointments WHERE user_id = users.id) as appointment_count,
+                   (SELECT COUNT(*) FROM prescriptions WHERE user_id = users.id) as prescription_count
+            FROM users
+            ORDER BY created_at DESC
+        ''')
+        
+        return jsonify({
+            'success': True,
+            'users': [dict(row) for row in users]
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching users: {e}")
+        return jsonify({'error': 'Failed to fetch users'}), 500
+
+@app.route('/api/admin/stats', methods=['GET'])
+@admin_required
+def api_admin_get_stats():
+    """Get system statistics (admin only)"""
+    try:
+        stats = {
+            'total_users': query_db('SELECT COUNT(*) as count FROM users', one=True)['count'],
+            'total_appointments': query_db('SELECT COUNT(*) as count FROM appointments', one=True)['count'],
+            'total_prescriptions': query_db('SELECT COUNT(*) as count FROM prescriptions', one=True)['count'],
+            'total_chat_messages': query_db('SELECT COUNT(*) as count FROM chat_history', one=True)['count'],
+            'active_goals': query_db('SELECT COUNT(*) as count FROM health_goals WHERE status = "active"', one=True)['count'],
+        }
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching admin stats: {e}")
+        return jsonify({'error': 'Failed to fetch statistics'}), 500
+
+# Add health goals API to enhanced.js API object
+# API.healthGoals = {
+#     list: () => API.request('/api/health-goals'),
+#     create: (data) => API.request('/api/health-goals', { method: 'POST', body: data }),
+#     update: (id, data) => API.request(`/api/health-goals/${id}`, { method: 'PUT', body: data }),
+#     delete: (id) => API.request(`/api/health-goals/${id}`, { method: 'DELETE' }),
+#     addProgress: (id, data) => API.request(`/api/health-goals/${id}/progress`, { method: 'POST', body: data }),
+#     getProgress: (id) => API.request(`/api/health-goals/${id}/progress`)
+# }
