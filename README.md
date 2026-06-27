@@ -285,20 +285,33 @@ The chatbot can analyze common symptoms including:
 
 ## 🛡️ Security & Privacy
 
-- Patient data stored locally in SQLite database
-- No external API calls for sensitive data
-- Phone number-based authentication
-- Chat history maintained securely
+- **Password Hashing** - SHA-256 encryption for all passwords
+- **Role-Based Access Control** - Separate admin and patient permissions
+- **Session Management** - Secure session handling with Streamlit
+- **Input Validation** - Protection against malicious inputs
+- **SQL Injection Prevention** - Parameterized database queries
+- **Patient data stored locally** in SQLite database
+- **No external API calls** for sensitive data
+- **Chat history maintained** securely with user association
 
 ## 🔄 Future Enhancements
 
 Potential improvements:
-- [ ] AI/ML model integration for better diagnosis
-- [ ] Email/SMS notifications
-- [ ] Multi-language support
-- [ ] Prescription management
-- [ ] Lab report integration
-- [ ] Doctor dashboard
+- [ ] Advanced AI/ML models for better diagnosis (TensorFlow/PyTorch)
+- [ ] Email/SMS notifications for appointments
+- [ ] Multi-language support (i18n)
+- [ ] Video consultation integration
+- [ ] Lab report upload and management
+- [ ] Prescription tracking system
+- [ ] Insurance integration
+- [ ] Doctor profiles and ratings
+- [ ] Payment gateway integration
+- [ ] Mobile app (React Native/Flutter)
+- [ ] Export reports to PDF
+- [ ] Advanced analytics dashboard
+- [ ] API for third-party integrations
+- [ ] Two-factor authentication (2FA)
+- [ ] HIPAA compliance features
 - [ ] Video consultation scheduling
 - [ ] Insurance integration
 - [ ] Mobile app version
