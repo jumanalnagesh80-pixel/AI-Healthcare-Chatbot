@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - AI Healthcare Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>🏥 HealthCare AI</h3>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="/dashboard">📊 Dashboard</a></li>
+                <li><a href="/appointments">📅 Appointments</a></li>
+                <li><a href="/prescriptions">💊 Prescriptions</a></li>
+                <li><a href="/vital-signs">❤️ Vital Signs</a></li>
+                <li><a href="/lab-reports">🔬 Lab Reports</a></li>
+                <li><a href="/chat">💬 AI Chat</a></li>
+                <li><a href="/profile" class="active">👤 Profile</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <div>
+                    <h1>👤 My Profile</h1>
+                    <p>Manage your account settings and personal information</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-2" style="align-items: start;">
+                <!-- Profile Information -->
+                <div class="card">
+                    <h2>Personal Information</h2>
+                    
+                    <form id="profile-form" style="margin-top: 1.5rem;">
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-input" value="John Doe" id="full-name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" value="john.doe@example.com" id="email">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-input" value="+1 234 567 8900" id="phone">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-input" value="1990-01-15" id="dob">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" id="gender">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Blood Group</label>
+                            <select class="form-select" id="blood-group">
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+" selected>O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Update Profile</button>
+                    </form>
+                </div>
+                
+                <!-- Medical Information -->
+                <div class="card">
+                    <h2>Medical Information</h2>
+                    
+                    <form style="margin-top: 1.5rem;">
+                        <div class="form-group">
+                            <label class="form-label">Allergies</label>
+                            <textarea class="form-textarea" id="allergies" placeholder="List any allergies...">Penicillin, Peanuts</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Chronic Conditions</label>
+                            <textarea class="form-textarea" id="chronic-conditions" placeholder="List any chronic conditions...">Hypertension</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Emergency Contact Name</label>
+                            <input type="text" class="form-input" value="Jane Doe" id="emergency-contact">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Emergency Contact Phone</label>
+                            <input type="tel" class="form-input" value="+1 234 567 8901" id="emergency-phone">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success" style="width: 100%;">Save Medical Info</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Change Password -->
+            <div class="card" style="margin-top: 2rem;">
+                <h2>Change Password</h2>
+                
+                <form id="password-form" style="margin-top: 1.5rem;">
+                    <div class="grid grid-3">
+                        <div class="form-group">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-input" placeholder="Enter current password">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-input" placeholder="Enter new password">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-input" placeholder="Confirm new password">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-warning">Change Password</button>
+                </form>
+            </div>
+            
+            <!-- Account Settings -->
+            <div class="grid grid-3" style="margin-top: 2rem;">
+                <div class="card" style="text-align: center;">
+                    <div class="card-icon" style="margin: 0 auto;">🔔</div>
+                    <h4>Notifications</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">Manage your notification preferences</p>
+                    <button class="btn btn-outline" style="width: 100%;">Configure</button>
+                </div>
+                
+                <div class="card" style="text-align: center;">
+                    <div class="card-icon" style="margin: 0 auto;">🔒</div>
+                    <h4>Privacy</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">Control your privacy settings</p>
+                    <button class="btn btn-outline" style="width: 100%;">Manage</button>
+                </div>
+                
+                <div class="card" style="text-align: center;">
+                    <div class="card-icon" style="margin: 0 auto;">💾</div>
+                    <h4>Export Data</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">Download your health data</p>
+                    <button class="btn btn-outline" style="width: 100%;">Export</button>
+                </div>
+            </div>
+            
+            <!-- Danger Zone -->
+            <div class="card" style="margin-top: 2rem; border: 2px solid var(--danger-color);">
+                <h2 style="color: var(--danger-color);">⚠️ Danger Zone</h2>
+                <p style="color: var(--text-secondary); margin: 1rem 0;">Once you delete your account, there is no going back. Please be certain.</p>
+                <button class="btn btn-danger">Delete Account</button>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Handle form submissions
+        document.getElementById('profile-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            showAlert('Profile updated successfully!', 'success');
+        });
+        
+        document.getElementById('password-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            showAlert('Password changed successfully!', 'success');
+        });
+    </script>
+</body>
+</html>

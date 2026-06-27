@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat - AI Healthcare Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard" id="chat-page">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>🏥 HealthCare AI</h3>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="/dashboard">📊 Dashboard</a></li>
+                <li><a href="/appointments">📅 Appointments</a></li>
+                <li><a href="/prescriptions">💊 Prescriptions</a></li>
+                <li><a href="/vital-signs">❤️ Vital Signs</a></li>
+                <li><a href="/lab-reports">🔬 Lab Reports</a></li>
+                <li><a href="/chat" class="active">💬 AI Chat</a></li>
+                <li><a href="/profile">👤 Profile</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <div>
+                    <h1>💬 AI Health Assistant</h1>
+                    <p>Get instant health advice and information</p>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn btn-outline" onclick="clearChat()">🗑️ Clear Chat</button>
+                    <button class="btn btn-secondary" onclick="exportChat()">💾 Export Chat</button>
+                </div>
+            </div>
+            
+            <!-- Quick Suggestions -->
+            <div class="card" style="margin-bottom: 1rem;">
+                <h3 style="margin-bottom: 1rem;">💡 Quick Questions:</h3>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn btn-outline" style="padding: 0.5rem 1rem;" onclick="sendQuickMessage('What are my recent test results?')">📊 Recent Results</button>
+                    <button class="btn btn-outline" style="padding: 0.5rem 1rem;" onclick="sendQuickMessage('When is my next appointment?')">📅 Next Appointment</button>
+                    <button class="btn btn-outline" style="padding: 0.5rem 1rem;" onclick="sendQuickMessage('Explain my prescription')">💊 Medications</button>
+                    <button class="btn btn-outline" style="padding: 0.5rem 1rem;" onclick="sendQuickMessage('I have a headache, what should I do?')">🤕 Symptoms</button>
+                    <button class="btn btn-outline" style="padding: 0.5rem 1rem;" onclick="sendQuickMessage('Health tips for better sleep')">💤 Health Tips</button>
+                </div>
+            </div>
+            
+            <!-- Chat Container -->
+            <div class="chat-container">
+                <div id="chat-messages" class="chat-messages">
+                    <!-- Welcome message -->
+                    <div class="message bot">
+                        <div class="message-avatar">AI</div>
+                        <div class="message-content">
+                            <p>👋 Hello! I'm your AI Health Assistant. I can help you with:</p>
+                            <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                                <li>Understanding your health data and test results</li>
+                                <li>Answering questions about symptoms and conditions</li>
+                                <li>Providing medication information</li>
+                                <li>Offering general health advice and wellness tips</li>
+                                <li>Scheduling appointments and managing your records</li>
+                            </ul>
+                            <p style="margin-top: 0.5rem;"><strong>How can I help you today?</strong></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <input 
+                        type="text" 
+                        id="chat-input" 
+                        class="form-input chat-input" 
+                        placeholder="Type your message here..."
+                        autocomplete="off"
+                    >
+                    <button id="send-message" class="btn btn-primary">
+                        <span>Send</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- AI Features Info -->
+            <div class="grid grid-3" style="margin-top: 2rem;">
+                <div class="card">
+                    <div class="card-icon">🧠</div>
+                    <h4>Smart Diagnosis</h4>
+                    <p style="color: var(--text-secondary);">AI-powered symptom analysis and preliminary diagnosis suggestions</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">💊</div>
+                    <h4>Medication Guide</h4>
+                    <p style="color: var(--text-secondary);">Get detailed information about your prescriptions and interactions</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">📈</div>
+                    <h4>Health Insights</h4>
+                    <p style="color: var(--text-secondary);">Personalized health trends and recommendations based on your data</p>
+                </div>
+            </div>
+            
+            <!-- Disclaimer -->
+            <div class="alert alert-warning" style="margin-top: 2rem;">
+                <strong>⚠️ Important Disclaimer:</strong> This AI assistant provides general health information only. For medical emergencies, call 911 immediately. Always consult with qualified healthcare professionals for medical advice, diagnosis, or treatment.
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        function sendQuickMessage(message) {
+            document.getElementById('chat-input').value = message;
+            sendMessage();
+        }
+        
+        function clearChat() {
+            if (confirm('Are you sure you want to clear the chat history?')) {
+                const messagesContainer = document.getElementById('chat-messages');
+                messagesContainer.innerHTML = `
+                    <div class="message bot">
+                        <div class="message-avatar">AI</div>
+                        <div class="message-content">
+                            Chat cleared. How can I help you today?
+                        </div>
+                    </div>
+                `;
+                app.chatMessages = [];
+            }
+        }
+        
+        function exportChat() {
+            const messages = document.querySelectorAll('.message');
+            let chatText = 'AI Healthcare Chatbot - Chat Export\n';
+            chatText += '=====================================\n\n';
+            
+            messages.forEach(msg => {
+                const sender = msg.classList.contains('user') ? 'You' : 'AI Assistant';
+                const content = msg.querySelector('.message-content').textContent;
+                chatText += `${sender}: ${content}\n\n`;
+            });
+            
+            const blob = new Blob([chatText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chat-export-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('Chat exported successfully!', 'success');
+        }
+    </script>
+</body>
+</html>

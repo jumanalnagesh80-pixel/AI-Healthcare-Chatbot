@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Reports - AI Healthcare Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard" id="lab-reports-page">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>🏥 HealthCare AI</h3>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="/dashboard">📊 Dashboard</a></li>
+                <li><a href="/appointments">📅 Appointments</a></li>
+                <li><a href="/prescriptions">💊 Prescriptions</a></li>
+                <li><a href="/vital-signs">❤️ Vital Signs</a></li>
+                <li><a href="/lab-reports" class="active">🔬 Lab Reports</a></li>
+                <li><a href="/chat">💬 AI Chat</a></li>
+                <li><a href="/profile">👤 Profile</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <div>
+                    <h1>🔬 Lab Reports</h1>
+                    <p>View your test results and reports</p>
+                </div>
+                <button class="btn btn-primary" onclick="navigateTo('/chat')">🤖 Ask AI to Explain Reports</button>
+            </div>
+            
+            <!-- Filters -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 200px; margin: 0;">
+                        <input type="text" id="search-reports" class="form-input" placeholder="Search test reports...">
+                    </div>
+                    <div class="form-group" style="min-width: 150px; margin: 0;">
+                        <select class="form-select" id="filter-report-status">
+                            <option value="">All Status</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="min-width: 150px; margin: 0;">
+                        <select class="form-select" id="filter-report-type">
+                            <option value="">All Types</option>
+                            <option value="Blood Test">Blood Test</option>
+                            <option value="Urine Test">Urine Test</option>
+                            <option value="X-Ray">X-Ray</option>
+                            <option value="MRI">MRI</option>
+                            <option value="CT Scan">CT Scan</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary">🔍 Search</button>
+                </div>
+            </div>
+            
+            <!-- Lab Reports Grid -->
+            <div id="lab-reports-container" class="grid grid-2">
+                <div class="card" style="text-align: center; padding: 3rem;">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p style="margin-top: 1rem;">Loading lab reports...</p>
+                </div>
+            </div>
+            
+            <!-- Upcoming Tests -->
+            <div class="card" style="margin-top: 2rem;">
+                <h2>🗓️ Upcoming Tests</h2>
+                <div class="table-container" style="box-shadow: none; padding: 0; margin-top: 1rem;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Test Name</th>
+                                <th>Scheduled Date</th>
+                                <th>Location</th>
+                                <th>Instructions</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Complete Blood Count (CBC)</td>
+                                <td>June 30, 2026 - 9:00 AM</td>
+                                <td>Main Lab - Building A</td>
+                                <td>Fasting required</td>
+                                <td><span class="badge badge-warning">Scheduled</span></td>
+                            </tr>
+                            <tr>
+                                <td>Lipid Profile</td>
+                                <td>July 5, 2026 - 10:00 AM</td>
+                                <td>Main Lab - Building A</td>
+                                <td>12-hour fasting</td>
+                                <td><span class="badge badge-warning">Scheduled</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Lab Test Information -->
+            <div class="grid grid-3" style="margin-top: 2rem;">
+                <div class="card">
+                    <h4>🩸 Blood Tests</h4>
+                    <p style="color: var(--text-secondary);">Complete blood count, metabolic panel, lipid profile, and more. Usually requires fasting.</p>
+                    <button class="btn btn-primary mt-2" style="width: 100%;">Schedule Blood Test</button>
+                </div>
+                
+                <div class="card">
+                    <h4>🔬 Diagnostic Tests</h4>
+                    <p style="color: var(--text-secondary);">X-rays, MRI, CT scans, ultrasound. No special preparation usually needed.</p>
+                    <button class="btn btn-primary mt-2" style="width: 100%;">Schedule Imaging</button>
+                </div>
+                
+                <div class="card">
+                    <h4>📊 Special Tests</h4>
+                    <p style="color: var(--text-secondary);">Allergy tests, genetic screening, hormone panels. May require special preparation.</p>
+                    <button class="btn btn-primary mt-2" style="width: 100%;">Schedule Special Test</button>
+                </div>
+            </div>
+            
+            <!-- Preparation Guidelines -->
+            <div class="card" style="margin-top: 2rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                <h2 style="color: white;">✅ Test Preparation Guidelines</h2>
+                <div class="grid grid-2" style="margin-top: 1rem; gap: 2rem;">
+                    <div>
+                        <h4 style="color: white;">Before Your Test:</h4>
+                        <ul style="color: rgba(255,255,255,0.9); line-height: 2;">
+                            <li>Follow fasting instructions carefully</li>
+                            <li>Bring your ID and insurance card</li>
+                            <li>Arrive 15 minutes early</li>
+                            <li>List current medications</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="color: white;">After Your Test:</h4>
+                        <ul style="color: rgba(255,255,255,0.9); line-height: 2;">
+                            <li>Results typically available in 2-5 days</li>
+                            <li>You'll receive email notification</li>
+                            <li>Schedule follow-up if needed</li>
+                            <li>Ask questions about results</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
