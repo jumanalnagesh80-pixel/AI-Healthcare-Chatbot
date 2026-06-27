@@ -165,6 +165,34 @@ def init_db():
         )
     ''')
     
+    # Files table (for medical document uploads)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS files (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            filename TEXT NOT NULL,
+            filepath TEXT NOT NULL,
+            file_type TEXT,
+            description TEXT,
+            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Notifications table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            type TEXT DEFAULT 'info',
+            is_read INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
     # Create default admin if not exists
     cursor.execute('SELECT COUNT(*) FROM admins')
     if cursor.fetchone()[0] == 0:
@@ -981,7 +1009,7 @@ def upload_file():
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO files (user_id, filename, filepath, file_type, description)
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?)
         ''', (session['user_id'], filename, filepath, file.content_type, description))
         conn.commit()
         conn.close()
@@ -1047,8 +1075,8 @@ def api_dashboard_stats():
 
 # ==================== HTML TEMPLATES ====================
 
-# Import modern landing page
-from modern_templates import MODERN_INDEX_HTML
+# Import modern templates
+from modern_templates import MODERN_INDEX_HTML, MODERN_DASHBOARD_HTML, FILES_HTML
 
 INDEX_HTML = MODERN_INDEX_HTML
 
