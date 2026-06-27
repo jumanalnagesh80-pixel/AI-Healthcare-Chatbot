@@ -223,6 +223,150 @@
     <!-- Scripts -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='js/enhanced.js') }}"></script>
+    <script>
+        // Tab switching function
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.auth-tab');
+            const forms = document.querySelectorAll('.auth-form');
+            
+            tabs.forEach(t => {
+                if (t.dataset.tab === tab) {
+                    t.classList.add('active');
+                } else {
+                    t.classList.remove('active');
+                }
+            });
+            
+            forms.forEach(f => {
+                if (f.id === `${tab}-form`) {
+                    f.classList.add('active');
+                } else {
+                    f.classList.remove('active');
+                }
+            });
+        }
+
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#3b82f6'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Handle login form submission
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showToast('Login successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                } else {
+                    showToast(data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('An error occurred. Please try again.', 'error');
+            }
+        });
+
+        // Handle register form submission
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                full_name: document.getElementById('register-fullname').value,
+                email: document.getElementById('register-email').value,
+                phone: document.getElementById('register-phone').value,
+                username: document.getElementById('register-username').value,
+                password: document.getElementById('register-password').value,
+                role: document.getElementById('register-role').value
+            };
+            
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            // Validation
+            if (!formData.full_name || !formData.email || !formData.username || !formData.password) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            if (formData.password !== confirmPassword) {
+                showToast('Passwords do not match', 'error');
+                return;
+            }
+            
+            if (formData.password.length < 6) {
+                showToast('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showToast('Registration successful! You can now login.', 'success');
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('login-username').value = formData.username;
+                    }, 1500);
+                } else {
+                    showToast(data.error || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showToast('An error occurred. Please try again.', 'error');
+            }
+        });
+    </script>
 
     <style>
         /* Additional page-specific styles */
@@ -234,6 +378,17 @@
             to {
                 opacity: 0;
                 transform: translateX(20px);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
             }
         }
 
