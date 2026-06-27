@@ -7,12 +7,14 @@ import sys
 import os
 import pandas as pd
 from datetime import datetime, timedelta
+import time
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database import db
 import auth
+import utils
 
 # Page config
 st.set_page_config(
@@ -72,27 +74,38 @@ st.markdown("""
 
 
 def main():
-    # Header with logout
-    col1, col2 = st.columns([3, 1])
+    # Header with logout and auto-refresh
+    col1, col2, col3 = st.columns([3, 1, 1])
     with col1:
         user = auth.get_current_user()
         st.markdown(f'<h1 class="main-header">🎛️ Admin Dashboard</h1>', unsafe_allow_html=True)
         st.markdown(f"**Welcome, {user['full_name']}** ({user['username']})")
     with col2:
-        st.write("")
+        # Auto-refresh toggle
+        auto_refresh = st.checkbox("🔄 Auto-refresh (30s)", value=False)
+        if auto_refresh:
+            time.sleep(0.1)
+            st.rerun()
+    with col3:
         st.write("")
         if st.button("🚪 Logout", use_container_width=True):
             auth.logout_user()
             st.switch_page("pages/1_🔐_Login.py")
     
+    # Check for upcoming appointments and show notifications
+    upcoming = db.get_upcoming_appointments(24)
+    reminders = utils.check_upcoming_appointments(upcoming)
+    utils.display_notification_banner(reminders)
+    
     st.divider()
     
     # Tabs for different admin sections
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📊 Dashboard", 
         "👥 Patients", 
         "📅 Appointments", 
         "👤 Users",
+        "📋 Activity Logs",
         "⚙️ Settings"
     ])
 
@@ -113,14 +126,28 @@ def main():
     with tab4:
         show_users()
     
-    # Tab 5: Settings
+    # Tab 5: Activity Logs
     with tab5:
+        show_activity_logs()
+    
+    # Tab 6: Settings
+    with tab6:
         show_settings()
 
 
 def show_dashboard():
     """Display dashboard overview with statistics"""
     st.subheader("📊 System Overview")
+    
+    # System health status
+    health = utils.get_system_health()
+    st.markdown(f"### {health['status']} - Health Score: {health['score']}/100")
+    
+    if health['warnings']:
+        for warning in health['warnings']:
+            st.warning(warning)
+    
+    st.divider()
     
     # Get statistics
     stats = db.get_statistics()
@@ -182,6 +209,39 @@ def show_dashboard():
             st.dataframe(df, use_container_width=True, hide_index=True)
         else:
             st.info("No patients found")
+    
+    st.divider()
+    
+    # Upcoming appointments with countdown
+    st.subheader("⏰ Upcoming Appointments (Next 24 Hours)")
+    upcoming = db.get_upcoming_appointments(24)
+    
+    if upcoming:
+        for apt in upcoming[:5]:  # Show top 5
+            col1, col2, col3 = st.columns([2, 2, 1])
+            with col1:
+                st.write(f"**{apt['patient_name']}** - {apt['specialty']}")
+            with col2:
+                st.write(f"📅 {apt['date']} at {apt['time']}")
+            with col3:
+                time_remaining = utils.calculate_time_remaining(apt['date'], apt['time'])
+                st.write(time_remaining)
+    else:
+        st.info("✅ No upcoming appointments in the next 24 hours")
+    
+    st.divider()
+    
+    # Recent activity feed
+    st.subheader("📋 Recent Activity")
+    recent_activities = db.get_recent_activities(10)
+    
+    if recent_activities:
+        for activity in recent_activities:
+            icon = utils.get_activity_icon(activity['activity_type'])
+            time_ago = utils.format_timestamp(activity['timestamp'])
+            st.markdown(f"{icon} **{activity['username']}**: {activity['description']} - *{time_ago}*")
+    else:
+        st.info("No recent activity")
 
 
 def show_patients():
@@ -189,26 +249,55 @@ def show_patients():
     st.subheader("👥 Patient Management")
     
     # Search and filter
-    col1, col2, col3 = st.columns([2, 1, 1])
+    col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
     with col1:
-        search_query = st.text_input("🔍 Search patients", placeholder="Search by name or phone")
+        search_query = st.text_input("🔍 Search patients", placeholder="Search by name or phone", key="patient_search")
     with col2:
         gender_filter = st.selectbox("Gender", ["All", "Male", "Female", "Other"])
     with col3:
         st.write("")
         st.write("")
-        refresh = st.button("🔄 Refresh", use_container_width=True)
+        refresh = st.button("🔄 Refresh", use_container_width=True, key="refresh_patients")
+    with col4:
+        st.write("")
+        st.write("")
+        show_export = st.button("📥 Export", use_container_width=True, key="export_patients")
     
-    # Get all patients
-    patients = db.get_all_patients()
+    # Get patients based on search
+    if search_query and len(search_query) >= 2:
+        patients = db.search_patients(search_query)
+        st.info(f"🔍 Found {len(patients)} patient(s) matching '{search_query}'")
+    else:
+        patients = db.get_all_patients()
     
     if patients:
-        # Apply filters
-        if search_query:
-            patients = [p for p in patients if search_query.lower() in p['name'].lower() 
-                       or search_query in p['phone']]
+        # Apply gender filter
         if gender_filter != "All":
             patients = [p for p in patients if p['gender'] == gender_filter]
+        
+        # Export functionality
+        if show_export:
+            st.divider()
+            col1, col2 = st.columns(2)
+            with col1:
+                csv_data = utils.export_to_csv(patients, "patients.csv")
+                st.download_button(
+                    label="📄 Download Patients as CSV",
+                    data=csv_data,
+                    file_name=f"patients_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+            with col2:
+                json_data = utils.export_to_json(patients, "patients.json")
+                st.download_button(
+                    label="📋 Download Patients as JSON",
+                    data=json_data,
+                    file_name=f"patients_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    mime="application/json",
+                    use_container_width=True
+                )
+            st.divider()
 
         
         st.write(f"**Total patients:** {len(patients)}")
@@ -242,20 +331,25 @@ def show_appointments():
     """Appointment management section"""
     st.subheader("📅 Appointment Management")
     
-    # Filters
-    col1, col2, col3 = st.columns(3)
+    # Filters and search
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        status_filter = st.selectbox("Status", ["All", "Scheduled", "Completed", "Cancelled"])
+        search_query = st.text_input("🔍 Search", placeholder="Patient name or specialty", key="appointment_search")
     with col2:
-        date_filter = st.date_input("Date", value=None)
+        status_filter = st.selectbox("Status", ["All", "Scheduled", "Completed", "Cancelled"])
     with col3:
+        date_filter = st.date_input("Date", value=None)
+    with col4:
         st.write("")
         st.write("")
         refresh = st.button("🔄 Refresh", key="refresh_appointments", use_container_width=True)
 
     
-    # Get appointments
-    if status_filter == "All":
+    # Get appointments based on search
+    if search_query and len(search_query) >= 2:
+        appointments = db.search_appointments(search_query)
+        st.info(f"🔍 Found {len(appointments)} appointment(s) matching '{search_query}'")
+    elif status_filter == "All":
         appointments = db.get_all_appointments()
     else:
         appointments = db.get_all_appointments(status_filter)
@@ -264,7 +358,41 @@ def show_appointments():
     if date_filter:
         appointments = [a for a in appointments if a['date'] == str(date_filter)]
     
+    # Export button
+    if appointments:
+        col1, col2 = st.columns([4, 1])
+        with col2:
+            if st.button("📥 Export Data", use_container_width=True):
+                st.session_state.show_appointment_export = True
+    
     st.write(f"**Total appointments:** {len(appointments)}")
+    
+    # Export appointments if button clicked
+    if st.session_state.get("show_appointment_export", False):
+        st.divider()
+        col1, col2 = st.columns(2)
+        with col1:
+            csv_data = utils.export_to_csv(appointments, "appointments.csv")
+            st.download_button(
+                label="📄 Download as CSV",
+                data=csv_data,
+                file_name=f"appointments_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+        with col2:
+            json_data = utils.export_to_json(appointments, "appointments.json")
+            st.download_button(
+                label="📋 Download as JSON",
+                data=json_data,
+                file_name=f"appointments_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json",
+                use_container_width=True
+            )
+        st.divider()
+        if st.button("❌ Close Export"):
+            st.session_state.show_appointment_export = False
+            st.rerun()
     
     if appointments:
         for apt in appointments:
@@ -282,6 +410,8 @@ def show_appointments():
                     st.write(f"**Date:** {apt['date']}")
                     st.write(f"**Time:** {apt['time']}")
                     st.write(f"**Status:** {apt['status']}")
+                    time_remaining = utils.calculate_time_remaining(apt['date'], apt['time'])
+                    st.write(f"**Countdown:** {time_remaining}")
                 
                 with col3:
                     new_status = st.selectbox(
@@ -401,3 +531,85 @@ def show_settings():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+def show_activity_logs():
+    """Activity logs and audit trail section"""
+    st.subheader("📋 System Activity Logs")
+    
+    # Filter options
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        time_filter = st.selectbox("Time Period", ["Today", "Last 7 Days", "All Time"])
+    with col2:
+        activity_filter = st.selectbox("Activity Type", 
+            ["All", "Login/Logout", "User Management", "Patient Management", "Appointments"])
+    with col3:
+        st.write("")
+        st.write("")
+        if st.button("🔄 Refresh Logs", use_container_width=True):
+            st.rerun()
+    
+    # Get activities
+    if time_filter == "Today":
+        activities = db.get_today_activities()
+    else:
+        activities = db.get_recent_activities(100 if time_filter == "Last 7 Days" else 500)
+    
+    if activities:
+        # Activity summary
+        summary = utils.get_activity_summary(activities)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Activities", summary['total'])
+        with col2:
+            st.metric("Unique Users", len(summary['by_user']))
+        with col3:
+            st.metric("Activity Types", len(summary['by_type']))
+        
+        st.divider()
+        
+        # Display activities
+        st.write(f"**Recent Activities ({len(activities)} records):**")
+        
+        for activity in activities[:50]:  # Show last 50
+            icon = utils.get_activity_icon(activity['activity_type'])
+            time_ago = utils.format_timestamp(activity['timestamp'])
+            
+            with st.expander(f"{icon} {activity['description']} - {time_ago}"):
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    st.write(f"**User:** {activity['username']}")
+                    st.write(f"**Activity Type:** {activity['activity_type']}")
+                    st.write(f"**Description:** {activity['description']}")
+                with col2:
+                    st.write(f"**Timestamp:** {activity['timestamp']}")
+                    st.write(f"**Activity ID:** {activity['activity_id']}")
+        
+        # Export activity logs
+        st.divider()
+        st.subheader("📥 Export Activity Logs")
+        col1, col2 = st.columns(2)
+        with col1:
+            csv_data = utils.export_to_csv(activities, "activity_logs.csv")
+            st.download_button(
+                label="📄 Download as CSV",
+                data=csv_data,
+                file_name=f"activity_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+        with col2:
+            json_data = utils.export_to_json(activities, "activity_logs.json")
+            st.download_button(
+                label="📋 Download as JSON",
+                data=json_data,
+                file_name=f"activity_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json",
+                use_container_width=True
+            )
+    else:
+        st.info("No activity logs found")

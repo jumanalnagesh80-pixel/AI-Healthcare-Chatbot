@@ -8,6 +8,7 @@ import sys
 import os
 from datetime import datetime, timedelta, date
 import uuid
+import time
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,6 +17,7 @@ from database import db
 from chatbot_engine import chatbot
 import config
 import auth
+import utils
 
 # Page configuration
 st.set_page_config(
@@ -120,18 +122,32 @@ def main():
     """Main application function"""
     user = auth.get_current_user()
     
-    # Header
-    col1, col2 = st.columns([3, 1])
+    # Header with auto-refresh option
+    col1, col2, col3 = st.columns([3, 1, 1])
     with col1:
         st.markdown(f'<h1 class="main-header">🏥 {config.APP_TITLE}</h1>', 
                     unsafe_allow_html=True)
         st.markdown(f"**Welcome, {user['full_name']}!** 👋")
     with col2:
-        st.write("")
+        # Notification badge
+        if st.session_state.current_patient:
+            upcoming = db.get_upcoming_appointments(24)
+            patient_upcoming = [a for a in upcoming if a['patient_name'] == st.session_state.current_patient['name']]
+            if patient_upcoming:
+                st.warning(f"🔔 {len(patient_upcoming)} upcoming appointment(s)")
+    with col3:
         st.write("")
         if st.button("🚪 Logout", use_container_width=True):
             auth.logout_user()
             st.switch_page("pages/1_🔐_Login.py")
+    
+    # Show appointment reminders
+    if st.session_state.current_patient:
+        upcoming = db.get_upcoming_appointments(24)
+        patient_upcoming = [a for a in upcoming if a['patient_name'] == st.session_state.current_patient['name']]
+        if patient_upcoming:
+            reminders = utils.check_upcoming_appointments(patient_upcoming)
+            utils.display_notification_banner(reminders)
     
     # Sidebar
     with st.sidebar:
@@ -423,12 +439,27 @@ def view_appointments():
     if appointments:
         st.write(f"**Your Appointments:**")
         
+        # Export button
+        if st.button("📥 Export My Appointments"):
+            csv_data = utils.export_to_csv(appointments, "my_appointments.csv")
+            st.download_button(
+                label="📄 Download as CSV",
+                data=csv_data,
+                file_name=f"my_appointments_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv"
+            )
+        
+        st.divider()
+        
         for apt in appointments:
             status_emoji = "✅" if apt['status'] == "Scheduled" else "❌" if apt['status'] == "Cancelled" else "✓"
+            time_remaining = utils.calculate_time_remaining(apt['date'], apt['time'])
+            
             st.markdown(f"""
             {status_emoji} **{apt['specialty']}**
             - **Date:** {apt['date']} at {apt['time']}
             - **Status:** {apt['status']}
+            - **Time Remaining:** {time_remaining}
             - **Symptoms:** {apt['symptoms'] or 'N/A'}
             ---
             """)
@@ -448,9 +479,22 @@ def view_symptom_history():
     if history:
         st.write(f"**Your Symptom History:**")
         
+        # Export button
+        if st.button("📥 Export Symptom History"):
+            csv_data = utils.export_to_csv(history, "symptom_history.csv")
+            st.download_button(
+                label="📄 Download as CSV",
+                data=csv_data,
+                file_name=f"symptom_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv"
+            )
+        
+        st.divider()
+        
         for entry in history[:10]:  # Show last 10 entries
+            time_ago = utils.format_timestamp(entry['logged_at'])
             st.markdown(f"""
-            **{entry['logged_at']}**
+            **{time_ago}**
             - **Symptoms:** {entry['symptoms']}
             - **Severity:** {entry['severity']}
             - **Possible Conditions:** {entry['possible_conditions']}

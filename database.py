@@ -109,6 +109,19 @@ class HealthcareDatabase:
                 )
             """)
             
+            # Activity log table for audit trail
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS activity_log (
+                    activity_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    activity_type TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    ip_address TEXT,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(user_id)
+                )
+            """)
+            
             self.connection.commit()
             print("✓ Database tables created successfully")
             
@@ -184,6 +197,10 @@ class HealthcareDatabase:
                 VALUES (?, ?, ?, ?, ?)
             """, (username, password_hash, email, role, full_name))
             self.connection.commit()
+            
+            # Log activity
+            self.log_activity(None, "user_created", f"New user created: {username} ({role})")
+            
             return self.cursor.lastrowid
         except sqlite3.IntegrityError:
             print(f"Username {username} already exists")
@@ -344,6 +361,11 @@ class HealthcareDatabase:
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (patient_id, patient_name, specialty, appointment_date, appointment_time, symptoms))
             self.connection.commit()
+            
+            # Log activity
+            self.log_activity(None, "appointment_booked", 
+                            f"Appointment booked for {patient_name} - {specialty} on {appointment_date}")
+            
             return self.cursor.lastrowid
         except sqlite3.Error as e:
             print(f"Error booking appointment: {e}")
@@ -583,6 +605,157 @@ class HealthcareDatabase:
         except sqlite3.Error as e:
             print(f"Error deleting patient: {e}")
             return False
+    
+    # ===== ACTIVITY LOG OPERATIONS =====
+    
+    def log_activity(self, user_id: Optional[int], activity_type: str, description: str, ip_address: str = None):
+        """Log system activity for audit trail"""
+        try:
+            self.cursor.execute("""
+                INSERT INTO activity_log (user_id, activity_type, description, ip_address)
+                VALUES (?, ?, ?, ?)
+            """, (user_id, activity_type, description, ip_address))
+            self.connection.commit()
+        except sqlite3.Error as e:
+            print(f"Error logging activity: {e}")
+    
+    def get_recent_activities(self, limit: int = 50) -> List[Dict]:
+        """Get recent system activities"""
+        try:
+            self.cursor.execute("""
+                SELECT a.activity_id, a.user_id, u.username, a.activity_type, 
+                       a.description, a.timestamp
+                FROM activity_log a
+                LEFT JOIN users u ON a.user_id = u.user_id
+                ORDER BY a.timestamp DESC
+                LIMIT ?
+            """, (limit,))
+            rows = self.cursor.fetchall()
+            activities = []
+            for row in rows:
+                activities.append({
+                    "activity_id": row[0],
+                    "user_id": row[1],
+                    "username": row[2] or "System",
+                    "activity_type": row[3],
+                    "description": row[4],
+                    "timestamp": row[5]
+                })
+            return activities
+        except sqlite3.Error as e:
+            print(f"Error retrieving activities: {e}")
+            return []
+    
+    def get_today_activities(self) -> List[Dict]:
+        """Get today's activities"""
+        try:
+            self.cursor.execute("""
+                SELECT a.activity_id, a.user_id, u.username, a.activity_type, 
+                       a.description, a.timestamp
+                FROM activity_log a
+                LEFT JOIN users u ON a.user_id = u.user_id
+                WHERE DATE(a.timestamp) = DATE('now')
+                ORDER BY a.timestamp DESC
+            """)
+            rows = self.cursor.fetchall()
+            activities = []
+            for row in rows:
+                activities.append({
+                    "activity_id": row[0],
+                    "user_id": row[1],
+                    "username": row[2] or "System",
+                    "activity_type": row[3],
+                    "description": row[4],
+                    "timestamp": row[5]
+                })
+            return activities
+        except sqlite3.Error as e:
+            print(f"Error retrieving today's activities: {e}")
+            return []
+    
+    def get_upcoming_appointments(self, hours: int = 24) -> List[Dict]:
+        """Get appointments in next N hours"""
+        try:
+            self.cursor.execute("""
+                SELECT appointment_id, patient_name, specialty, appointment_date, 
+                       appointment_time, symptoms, status
+                FROM appointments
+                WHERE status = 'Scheduled'
+                AND datetime(appointment_date || ' ' || appointment_time) 
+                    BETWEEN datetime('now') AND datetime('now', '+' || ? || ' hours')
+                ORDER BY appointment_date, appointment_time
+            """, (hours,))
+            rows = self.cursor.fetchall()
+            appointments = []
+            for row in rows:
+                appointments.append({
+                    "appointment_id": row[0],
+                    "patient_name": row[1],
+                    "specialty": row[2],
+                    "date": row[3],
+                    "time": row[4],
+                    "symptoms": row[5],
+                    "status": row[6]
+                })
+            return appointments
+        except sqlite3.Error as e:
+            print(f"Error retrieving upcoming appointments: {e}")
+            return []
+    
+    def search_patients(self, query: str) -> List[Dict]:
+        """Search patients by name or phone"""
+        try:
+            search_query = f"%{query}%"
+            self.cursor.execute("""
+                SELECT patient_id, name, age, gender, phone, email, blood_group
+                FROM patients
+                WHERE name LIKE ? OR phone LIKE ?
+                ORDER BY name
+            """, (search_query, search_query))
+            rows = self.cursor.fetchall()
+            patients = []
+            for row in rows:
+                patients.append({
+                    "patient_id": row[0],
+                    "name": row[1],
+                    "age": row[2],
+                    "gender": row[3],
+                    "phone": row[4],
+                    "email": row[5],
+                    "blood_group": row[6]
+                })
+            return patients
+        except sqlite3.Error as e:
+            print(f"Error searching patients: {e}")
+            return []
+    
+    def search_appointments(self, query: str) -> List[Dict]:
+        """Search appointments by patient name or specialty"""
+        try:
+            search_query = f"%{query}%"
+            self.cursor.execute("""
+                SELECT appointment_id, patient_name, specialty, appointment_date,
+                       appointment_time, symptoms, status
+                FROM appointments
+                WHERE patient_name LIKE ? OR specialty LIKE ?
+                ORDER BY appointment_date DESC, appointment_time DESC
+            """, (search_query, search_query))
+            rows = self.cursor.fetchall()
+            appointments = []
+            for row in rows:
+                appointments.append({
+                    "appointment_id": row[0],
+                    "patient_name": row[1],
+                    "specialty": row[2],
+                    "date": row[3],
+                    "time": row[4],
+                    "symptoms": row[5],
+                    "status": row[6]
+                })
+            return appointments
+        except sqlite3.Error as e:
+            print(f"Error searching appointments: {e}")
+            return []
     
     def close(self):
         """Close database connection"""
