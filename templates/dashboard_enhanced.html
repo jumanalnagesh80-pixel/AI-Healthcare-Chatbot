@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AI Healthcare Chatbot</title>
+    <link rel="stylesheet" href="/static/css/enhanced.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-heartbeat"></i>
+                <span>HealthCare AI</span>
+            </div>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-link active">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/chat" class="nav-link">
+                    <i class="fas fa-comments"></i>
+                    <span>AI Chat</span>
+                </a>
+                <a href="/appointments" class="nav-link">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="/prescriptions" class="nav-link">
+                    <i class="fas fa-prescription-bottle-alt"></i>
+                    <span>Prescriptions</span>
+                </a>
+                <a href="/vital-signs" class="nav-link">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Vital Signs</span>
+                </a>
+                <a href="/lab-reports" class="nav-link">
+                    <i class="fas fa-flask"></i>
+                    <span>Lab Reports</span>
+                </a>
+            </div>
+            <div class="nav-actions">
+                <button class="icon-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge badge-danger notification-badge">3</span>
+                </button>
+                <div class="user-menu">
+                    <button class="user-btn" id="userMenuBtn">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <span class="user-name" id="userName">Loading...</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="/profile" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Profile</span>
+                        </a>
+                        <a href="/settings" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Welcome Section -->
+            <div class="welcome-section animate-fade-in">
+                <div class="welcome-content">
+                    <h1 class="welcome-title">Welcome back, <span id="welcomeName">User</span>! 👋</h1>
+                    <p class="welcome-subtitle">Here's what's happening with your health today</p>
+                </div>
+                <div class="welcome-actions">
+                    <button class="btn btn-primary" onclick="window.location.href='/chat'">
+                        <i class="fas fa-robot"></i>
+                        <span>Chat with AI</span>
+                    </button>
+                    <button class="btn btn-outline" onclick="window.location.href='/appointments'">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Book Appointment</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid animate-fade-in-up" style="animation-delay: 0.1s">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Appointments</div>
+                        <div class="stat-value" id="statAppointments">0</div>
+                        <div class="stat-change">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>2 this month</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-card-success">
+                    <div class="stat-icon">
+                        <i class="fas fa-prescription-bottle-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Prescriptions</div>
+                        <div class="stat-value" id="statPrescriptions">0</div>
+                        <div class="stat-change">
+                            <i class="fas fa-check-circle"></i>
+                            <span>All active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Lab Reports</div>
+                        <div class="stat-value" id="statLabReports">0</div>
+                        <div class="stat-change">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>1 needs attention</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-card-danger">
+                    <div class="stat-icon">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Vital Signs</div>
+                        <div class="stat-value" id="statVitalSigns">0</div>
+                        <div class="stat-change">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Last checked today</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="dashboard-grid animate-fade-in-up" style="animation-delay: 0.2s">
+                <!-- Vital Signs Chart -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Vital Signs Trends</span>
+                        </div>
+                        <div class="card-actions">
+                            <select class="form-select form-select-sm" id="chartPeriod">
+                                <option value="7">Last 7 days</option>
+                                <option value="14">Last 14 days</option>
+                                <option value="30" selected>Last 30 days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="vitalSignsChart" height="100"></canvas>
+                    </div>
+                </div>
+
+                <!-- Health Score -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-heart"></i>
+                            <span>Health Score</span>
+                        </div>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="health-score">
+                            <div class="score-circle">
+                                <svg class="score-svg" viewBox="0 0 100 100">
+                                    <circle class="score-bg" cx="50" cy="50" r="45"></circle>
+                                    <circle class="score-progress" cx="50" cy="50" r="45" id="scoreProgress"></circle>
+                                </svg>
+                                <div class="score-value">
+                                    <span id="healthScore">85</span>
+                                    <span class="score-unit">%</span>
+                                </div>
+                            </div>
+                            <div class="score-label">Excellent Health</div>
+                            <div class="score-description">Your health metrics are looking great! Keep up the good work.</div>
+                        </div>
+                        <div class="health-metrics">
+                            <div class="metric-item">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <span>Blood Pressure: Normal</span>
+                            </div>
+                            <div class="metric-item">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <span>Heart Rate: Healthy</span>
+                            </div>
+                            <div class="metric-item">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                <span>Blood Sugar: Monitor</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BMI Chart -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-weight"></i>
+                            <span>BMI Tracking</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="bmiChart" height="100"></canvas>
+                    </div>
+                </div>
+
+                <!-- Activity Chart -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-running"></i>
+                            <span>Recent Activity</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="activityChart" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Appointments -->
+            <div class="dashboard-section animate-fade-in-up" style="animation-delay: 0.3s">
+                <div class="section-header">
+                    <h2 class="section-title">Upcoming Appointments</h2>
+                    <a href="/appointments" class="btn btn-text">View All <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="appointments-list" id="upcomingAppointments">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <span>Loading appointments...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Prescriptions -->
+            <div class="dashboard-section animate-fade-in-up" style="animation-delay: 0.4s">
+                <div class="section-header">
+                    <h2 class="section-title">Active Prescriptions</h2>
+                    <a href="/prescriptions" class="btn btn-text">View All <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="prescriptions-grid" id="activePrescriptions">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <span>Loading prescriptions...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Tips -->
+            <div class="dashboard-section animate-fade-in-up" style="animation-delay: 0.5s">
+                <div class="section-header">
+                    <h2 class="section-title">Health Tips for You</h2>
+                </div>
+                <div class="tips-grid">
+                    <div class="tip-card">
+                        <div class="tip-icon">
+                            <i class="fas fa-glass-water"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h3>Stay Hydrated</h3>
+                            <p>Drink at least 8 glasses of water daily to maintain optimal health.</p>
+                        </div>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h3>Get Enough Sleep</h3>
+                            <p>Aim for 7-9 hours of quality sleep each night for better recovery.</p>
+                        </div>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">
+                            <i class="fas fa-running"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h3>Regular Exercise</h3>
+                            <p>Engage in at least 30 minutes of physical activity daily.</p>
+                        </div>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">
+                            <i class="fas fa-apple-alt"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h3>Balanced Diet</h3>
+                            <p>Eat a variety of fruits, vegetables, and whole grains for nutrition.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Quick Actions Floating Button -->
+    <div class="fab-container">
+        <button class="fab" id="fabBtn">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="fab-menu" id="fabMenu">
+            <a href="/chat" class="fab-item">
+                <i class="fas fa-robot"></i>
+                <span>AI Chat</span>
+            </a>
+            <a href="/appointments" class="fab-item">
+                <i class="fas fa-calendar-plus"></i>
+                <span>Book Appointment</span>
+            </a>
+            <a href="/vital-signs" class="fab-item">
+                <i class="fas fa-heartbeat"></i>
+                <span>Record Vitals</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/static/js/enhanced.js"></script>
+    <script>
+        let vitalSignsChart, bmiChart, activityChart;
+
+        // Initialize dashboard on load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check authentication
+            const isAuth = await checkAuth();
+            if (!isAuth) {
+                window.location.href = '/login';
+                return;
+            }
+
+            // Load user profile
+            await loadUserProfile();
+
+            // Load dashboard data
+            await loadDashboardStats();
+            await loadUpcomingAppointments();
+            await loadActivePrescriptions();
+            await loadVitalSignsChart();
+            await loadBMIChart();
+            await loadActivityChart();
+
+            // Initialize UI components
+            initializeUIComponents();
+        });
+
+        // Load user profile
+        async function loadUserProfile() {
+            try {
+                const profile = await apiClient.getProfile();
+                const firstName = profile.full_name ? profile.full_name.split(' ')[0] : 'User';
+                document.getElementById('welcomeName').textContent = firstName;
+                document.getElementById('userName').textContent = profile.full_name || 'User';
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        // Load dashboard stats
+        async function loadDashboardStats() {
+            try {
+                const stats = await apiClient.getDashboardStats();
+                
+                // Animate counters
+                animateCounter('statAppointments', stats.total_appointments || 0);
+                animateCounter('statPrescriptions', stats.active_prescriptions || 0);
+                animateCounter('statLabReports', stats.lab_reports || 0);
+                animateCounter('statVitalSigns', stats.vital_signs_count || 0);
+
+                // Update health score
+                const score = stats.health_score || 85;
+                document.getElementById('healthScore').textContent = score;
+                updateScoreProgress(score);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Animate counter
+        function animateCounter(elementId, target) {
+            const element = document.getElementById(elementId);
+            const duration = 1000;
+            const start = 0;
+            const increment = target / (duration / 16);
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 16);
+        }
+
+        // Update health score progress
+        function updateScoreProgress(score) {
+            const circle = document.getElementById('scoreProgress');
+            const radius = 45;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (score / 100) * circumference;
+            circle.style.strokeDasharray = `${circumference}`;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        // Load upcoming appointments
+        async function loadUpcomingAppointments() {
+            const container = document.getElementById('upcomingAppointments');
+            try {
+                const appointments = await apiClient.getAppointments();
+                const upcoming = appointments
+                    .filter(apt => new Date(apt.appointment_date) >= new Date())
+                    .sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date))
+                    .slice(0, 3);
+
+                if (upcoming.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No upcoming appointments</div>';
+                    return;
+                }
+
+                container.innerHTML = upcoming.map(apt => `
+                    <div class="appointment-item animate-slide-in">
+                        <div class="appointment-date">
+                            <div class="date-day">${new Date(apt.appointment_date).getDate()}</div>
+                            <div class="date-month">${new Date(apt.appointment_date).toLocaleString('default', { month: 'short' })}</div>
+                        </div>
+                        <div class="appointment-details">
+                            <div class="appointment-title">${apt.reason || 'General Checkup'}</div>
+                            <div class="appointment-meta">
+                                <span><i class="fas fa-user-md"></i> ${apt.doctor_name || 'Dr. Smith'}</span>
+                                <span><i class="fas fa-clock"></i> ${apt.appointment_date.split(' ')[1] || '10:00 AM'}</span>
+                            </div>
+                        </div>
+                        <div class="appointment-status">
+                            <span class="badge badge-${apt.status === 'confirmed' ? 'success' : 'warning'}">${apt.status}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                container.innerHTML = '<div class="error-state">Failed to load appointments</div>';
+            }
+        }
+
+        // Load active prescriptions
+        async function loadActivePrescriptions() {
+            const container = document.getElementById('activePrescriptions');
+            try {
+                const prescriptions = await apiClient.getPrescriptions();
+                const active = prescriptions.filter(p => p.status === 'active').slice(0, 4);
+
+                if (active.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No active prescriptions</div>';
+                    return;
+                }
+
+                container.innerHTML = active.map(rx => `
+                    <div class="prescription-card animate-scale-in">
+                        <div class="prescription-header">
+                            <i class="fas fa-pills"></i>
+                            <span class="badge badge-success">Active</span>
+                        </div>
+                        <div class="prescription-body">
+                            <h4>${rx.medication_name}</h4>
+                            <p class="prescription-dosage">${rx.dosage}</p>
+                            <p class="prescription-frequency">${rx.frequency}</p>
+                        </div>
+                        <div class="prescription-footer">
+                            <small>Dr. ${rx.doctor_name || 'Unknown'}</small>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading prescriptions:', error);
+                container.innerHTML = '<div class="error-state">Failed to load prescriptions</div>';
+            }
+        }
+
+        // Load vital signs chart
+        async function loadVitalSignsChart() {
+            try {
+                const vitalSigns = await apiClient.getVitalSigns();
+                const last30Days = vitalSigns.slice(-30);
+
+                const ctx = document.getElementById('vitalSignsChart').getContext('2d');
+                vitalSignsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: last30Days.map(v => new Date(v.recorded_date).toLocaleDateString()),
+                        datasets: [
+                            {
+                                label: 'Systolic BP',
+                                data: last30Days.map(v => v.blood_pressure_systolic),
+                                borderColor: 'rgb(99, 102, 241)',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Heart Rate',
+                                data: last30Days.map(v => v.heart_rate),
+                                borderColor: 'rgb(239, 68, 68)',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading vital signs chart:', error);
+            }
+        }
+
+        // Load BMI chart
+        async function loadBMIChart() {
+            try {
+                const vitalSigns = await apiClient.getVitalSigns();
+                const last30Days = vitalSigns.slice(-30);
+
+                const ctx = document.getElementById('bmiChart').getContext('2d');
+                bmiChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: last30Days.map(v => new Date(v.recorded_date).toLocaleDateString()),
+                        datasets: [{
+                            label: 'BMI',
+                            data: last30Days.map(v => v.bmi || 0),
+                            backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                            borderColor: 'rgb(34, 197, 94)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                min: 15,
+                                max: 35
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading BMI chart:', error);
+            }
+        }
+
+        // Load activity chart
+        async function loadActivityChart() {
+            try {
+                const ctx = document.getElementById('activityChart').getContext('2d');
+                activityChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Appointments', 'Prescriptions', 'Lab Reports', 'Vital Signs'],
+                        datasets: [{
+                            data: [12, 8, 5, 30],
+                            backgroundColor: [
+                                'rgba(99, 102, 241, 0.8)',
+                                'rgba(34, 197, 94, 0.8)',
+                                'rgba(251, 146, 60, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading activity chart:', error);
+            }
+        }
+
+        // Initialize UI components
+        function initializeUI Components() {
+            // User menu toggle
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            userMenuBtn.addEventListener('click', () => {
+                userDropdown.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!userMenuBtn.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+                e.preventDefault();
+                await apiClient.logout();
+                window.location.href = '/login';
+            });
+
+            // FAB menu
+            const fabBtn = document.getElementById('fabBtn');
+            const fabMenu = document.getElementById('fabMenu');
+            fabBtn.addEventListener('click', () => {
+                fabMenu.classList.toggle('show');
+                fabBtn.classList.toggle('active');
+            });
+
+            // Chart period selector
+            document.getElementById('chartPeriod').addEventListener('change', (e) => {
+                loadVitalSignsChart();
+            });
+        }
+    </script>
+</body>
+</html>

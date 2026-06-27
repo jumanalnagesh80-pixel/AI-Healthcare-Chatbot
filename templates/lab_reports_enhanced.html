@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Reports - AI Healthcare Chatbot</title>
+    <link rel="stylesheet" href="/static/css/enhanced.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-heartbeat"></i>
+                <span>HealthCare AI</span>
+            </div>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/chat" class="nav-link">
+                    <i class="fas fa-comments"></i>
+                    <span>AI Chat</span>
+                </a>
+                <a href="/appointments" class="nav-link">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="/prescriptions" class="nav-link">
+                    <i class="fas fa-prescription-bottle-alt"></i>
+                    <span>Prescriptions</span>
+                </a>
+                <a href="/vital-signs" class="nav-link">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Vital Signs</span>
+                </a>
+                <a href="/lab-reports" class="nav-link active">
+                    <i class="fas fa-flask"></i>
+                    <span>Lab Reports</span>
+                </a>
+            </div>
+            <div class="nav-actions">
+                <button class="icon-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge badge-danger notification-badge">3</span>
+                </button>
+                <div class="user-menu">
+                    <button class="user-btn" id="userMenuBtn">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <span class="user-name" id="userName">Loading...</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="/profile" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Profile</span>
+                        </a>
+                        <a href="/settings" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header animate-fade-in">
+                <div>
+                    <h1 class="page-title">Lab Reports</h1>
+                    <p class="page-subtitle">View your laboratory test results</p>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-bar animate-fade-in-up" style="animation-delay: 0.1s">
+                <div class="filter-group">
+                    <input type="text" class="form-input" placeholder="Search reports..." id="searchInput">
+                </div>
+                <div class="filter-group">
+                    <select class="form-select" id="typeFilter">
+                        <option value="">All Types</option>
+                        <option value="Blood Test">Blood Test</option>
+                        <option value="Urine Test">Urine Test</option>
+                        <option value="X-Ray">X-Ray</option>
+                        <option value="MRI">MRI</option>
+                        <option value="CT Scan">CT Scan</option>
+                        <option value="Ultrasound">Ultrasound</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="normal">Normal</option>
+                        <option value="abnormal">Abnormal</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Lab Reports Grid -->
+            <div class="lab-reports-grid" id="reportsContainer">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <span>Loading reports...</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Report Detail Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3>Lab Report Details</h3>
+                <button class="modal-close" onclick="closeModal('detailModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="reportDetails">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('detailModal')">Close</button>
+                <button class="btn btn-primary" onclick="printReport()">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+                <button class="btn btn-success" onclick="downloadReport()">
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/static/js/enhanced.js"></script>
+    <script>
+        let labReports = [];
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', async function() {
+            const isAuth = await checkAuth();
+            if (!isAuth) {
+                window.location.href = '/login';
+                return;
+            }
+
+            await loadUserProfile();
+            await loadLabReports();
+            initializeUIComponents();
+        });
+
+        // Load user profile
+        async function loadUserProfile() {
+            try {
+                const profile = await apiClient.getProfile();
+                document.getElementById('userName').textContent = profile.full_name || 'User';
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        // Load lab reports
+        async function loadLabReports() {
+            const container = document.getElementById('reportsContainer');
+            try {
+                labReports = await apiClient.getLabReports();
+                displayLabReports(labReports);
+            } catch (error) {
+                console.error('Error loading lab reports:', error);
+                container.innerHTML = '<div class="error-state">Failed to load lab reports</div>';
+            }
+        }
+
+        // Display lab reports
+        function displayLabReports(data) {
+            const container = document.getElementById('reportsContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state animate-fade-in">
+                        <i class="fas fa-flask"></i>
+                        <h3>No lab reports found</h3>
+                        <p>Your lab reports will appear here once available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.map((report, index) => {
+                const hasAbnormal = report.abnormal_flags && report.abnormal_flags.length > 0;
+                const statusClass = report.status === 'normal' ? 'success' : 
+                                  report.status === 'abnormal' ? 'danger' : 'warning';
+
+                return `
+                    <div class="lab-report-card animate-fade-in-up" style="animation-delay: ${index * 0.05}s" onclick="showReportDetail(${report.id})">
+                        <div class="report-header">
+                            <div class="report-icon ${statusClass}">
+                                <i class="fas fa-flask"></i>
+                            </div>
+                            <div class="report-badges">
+                                <span class="badge badge-${statusClass}">${report.status || 'pending'}</span>
+                                ${hasAbnormal ? '<span class="badge badge-warning"><i class="fas fa-exclamation-triangle"></i> Attention</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="report-body">
+                            <h3>${report.test_name || 'Lab Test'}</h3>
+                            <div class="report-info">
+                                <div class="info-row">
+                                    <i class="fas fa-calendar"></i>
+                                    <span><strong>Test Date:</strong> ${new Date(report.test_date).toLocaleDateString()}</span>
+                                </div>
+                                <div class="info-row">
+                                    <i class="fas fa-user-md"></i>
+                                    <span><strong>Ordered By:</strong> ${report.doctor_name || 'Unknown'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <i class="fas fa-building"></i>
+                                    <span><strong>Lab:</strong> ${report.lab_name || 'Central Lab'}</span>
+                                </div>
+                            </div>
+                            ${report.results_summary ? `
+                                <div class="report-summary">
+                                    <strong>Summary:</strong> ${report.results_summary}
+                                </div>
+                            ` : ''}
+                            ${hasAbnormal ? `
+                                <div class="abnormal-flags">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Abnormal Results:</strong> ${report.abnormal_flags.join(', ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="report-footer">
+                            <small class="text-muted">Report ID: #${report.id}</small>
+                            <button class="btn btn-sm btn-text" onclick="event.stopPropagation(); showReportDetail(${report.id})">
+                                View Full Report <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Show report detail
+        function showReportDetail(id) {
+            const report = labReports.find(r => r.id === id);
+            if (!report) return;
+
+            const hasAbnormal = report.abnormal_flags && report.abnormal_flags.length > 0;
+
+            const detailsHtml = `
+                <div class="report-detail">
+                    <div class="detail-section">
+                        <div class="detail-header">
+                            <h4><i class="fas fa-flask"></i> Test Information</h4>
+                            <span class="badge badge-${report.status === 'normal' ? 'success' : report.status === 'abnormal' ? 'danger' : 'warning'}">
+                                ${report.status || 'pending'}
+                            </span>
+                        </div>
+                        <table class="detail-table">
+                            <tr>
+                                <td><strong>Test Name:</strong></td>
+                                <td>${report.test_name || 'Lab Test'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Test Date:</strong></td>
+                                <td>${new Date(report.test_date).toLocaleDateString()}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Report Date:</strong></td>
+                                <td>${new Date(report.report_date || report.test_date).toLocaleDateString()}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Ordered By:</strong></td>
+                                <td>${report.doctor_name || 'Unknown'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Laboratory:</strong></td>
+                                <td>${report.lab_name || 'Central Lab'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Report ID:</strong></td>
+                                <td>#${report.id}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    ${report.results_summary ? `
+                        <div class="detail-section">
+                            <h4><i class="fas fa-clipboard-check"></i> Results Summary</h4>
+                            <p>${report.results_summary}</p>
+                        </div>
+                    ` : ''}
+
+                    ${hasAbnormal ? `
+                        <div class="detail-section alert-warning">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Abnormal Results Detected</h4>
+                            <p>The following tests show results outside the normal range:</p>
+                            <ul class="abnormal-list">
+                                ${report.abnormal_flags.map(flag => `<li>${flag}</li>`).join('')}
+                            </ul>
+                            <p class="text-muted"><em>Please consult with your doctor to discuss these results.</em></p>
+                        </div>
+                    ` : `
+                        <div class="detail-section alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>All Results Normal</strong>
+                            <p>All test results are within normal ranges.</p>
+                        </div>
+                    `}
+
+                    ${report.test_results ? `
+                        <div class="detail-section">
+                            <h4><i class="fas fa-list"></i> Detailed Results</h4>
+                            <div class="results-table-container">
+                                <table class="results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>Result</th>
+                                            <th>Reference Range</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${generateResultsRows(report.test_results, report.abnormal_flags)}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${report.notes ? `
+                        <div class="detail-section">
+                            <h4><i class="fas fa-sticky-note"></i> Notes</h4>
+                            <p>${report.notes}</p>
+                        </div>
+                    ` : ''}
+
+                    <div class="detail-section">
+                        <h4><i class="fas fa-info-circle"></i> Important Information</h4>
+                        <div class="info-alert">
+                            <p><i class="fas fa-shield-alt"></i> This report is confidential and for the patient's use only.</p>
+                            <p><i class="fas fa-user-md"></i> Please discuss these results with your healthcare provider.</p>
+                            <p><i class="fas fa-clock"></i> Lab results should be interpreted in the context of your overall health.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('reportDetails').innerHTML = detailsHtml;
+            openModal('detailModal');
+        }
+
+        // Generate results rows
+        function generateResultsRows(results, abnormalFlags) {
+            if (!results) {
+                return '<tr><td colspan="4" class="text-center">No detailed results available</td></tr>';
+            }
+
+            // Example format: {"WBC": "7.5", "RBC": "4.5", "Hemoglobin": "14.2"}
+            const sampleRanges = {
+                "WBC": "4.5-11.0",
+                "RBC": "4.2-5.4",
+                "Hemoglobin": "13.5-17.5",
+                "Platelets": "150-400",
+                "Glucose": "70-100",
+                "Cholesterol": "<200",
+                "HDL": ">40",
+                "LDL": "<100",
+                "Triglycerides": "<150"
+            };
+
+            let rows = '';
+            for (const [param, value] of Object.entries(results)) {
+                const isAbnormal = abnormalFlags && abnormalFlags.some(flag => flag.toLowerCase().includes(param.toLowerCase()));
+                const range = sampleRanges[param] || 'N/A';
+                
+                rows += `
+                    <tr class="${isAbnormal ? 'abnormal-row' : ''}">
+                        <td>${param}</td>
+                        <td><strong>${value}</strong></td>
+                        <td>${range}</td>
+                        <td>
+                            ${isAbnormal ? 
+                                '<span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Abnormal</span>' :
+                                '<span class="badge badge-success"><i class="fas fa-check"></i> Normal</span>'
+                            }
+                        </td>
+                    </tr>
+                `;
+            }
+
+            return rows || '<tr><td colspan="4" class="text-center">No results data</td></tr>';
+        }
+
+        // Print report
+        function printReport() {
+            window.print();
+        }
+
+        // Download report
+        function downloadReport() {
+            showToast('Download feature coming soon!', 'info');
+        }
+
+        // Filter reports
+        function filterReports() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const type = document.getElementById('typeFilter').value;
+            const status = document.getElementById('statusFilter').value;
+
+            let filtered = labReports.filter(report => {
+                const matchesSearch = report.test_name?.toLowerCase().includes(search) || 
+                                    report.doctor_name?.toLowerCase().includes(search) ||
+                                    report.lab_name?.toLowerCase().includes(search);
+                const matchesType = !type || report.test_name === type;
+                const matchesStatus = !status || report.status === status;
+
+                return matchesSearch && matchesType && matchesStatus;
+            });
+
+            displayLabReports(filtered);
+        }
+
+        // Initialize UI components
+        function initializeUIComponents() {
+            // User menu
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            userMenuBtn.addEventListener('click', () => {
+                userDropdown.classList.toggle('show');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!userMenuBtn.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+                e.preventDefault();
+                await apiClient.logout();
+                window.location.href = '/login';
+            });
+
+            // Search and filters
+            document.getElementById('searchInput').addEventListener('input', filterReports);
+            document.getElementById('typeFilter').addEventListener('change', filterReports);
+            document.getElementById('statusFilter').addEventListener('change', filterReports);
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+    </script>
+</body>
+</html>

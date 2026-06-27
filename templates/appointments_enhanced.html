@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments - AI Healthcare Chatbot</title>
+    <link rel="stylesheet" href="/static/css/enhanced.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-heartbeat"></i>
+                <span>HealthCare AI</span>
+            </div>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/chat" class="nav-link">
+                    <i class="fas fa-comments"></i>
+                    <span>AI Chat</span>
+                </a>
+                <a href="/appointments" class="nav-link active">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="/prescriptions" class="nav-link">
+                    <i class="fas fa-prescription-bottle-alt"></i>
+                    <span>Prescriptions</span>
+                </a>
+                <a href="/vital-signs" class="nav-link">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Vital Signs</span>
+                </a>
+                <a href="/lab-reports" class="nav-link">
+                    <i class="fas fa-flask"></i>
+                    <span>Lab Reports</span>
+                </a>
+            </div>
+            <div class="nav-actions">
+                <button class="icon-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge badge-danger notification-badge">3</span>
+                </button>
+                <div class="user-menu">
+                    <button class="user-btn" id="userMenuBtn">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <span class="user-name" id="userName">Loading...</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="/profile" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Profile</span>
+                        </a>
+                        <a href="/settings" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header animate-fade-in">
+                <div>
+                    <h1 class="page-title">My Appointments</h1>
+                    <p class="page-subtitle">Manage your healthcare appointments</p>
+                </div>
+                <button class="btn btn-primary" id="bookAppointmentBtn">
+                    <i class="fas fa-plus"></i>
+                    <span>Book Appointment</span>
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-bar animate-fade-in-up" style="animation-delay: 0.1s">
+                <div class="filter-group">
+                    <input type="text" class="form-input" placeholder="Search appointments..." id="searchInput">
+                </div>
+                <div class="filter-group">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select class="form-select" id="timeFilter">
+                        <option value="all">All Time</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="past">Past</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Appointments List -->
+            <div class="appointments-container" id="appointmentsContainer">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <span>Loading appointments...</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Book Appointment Modal -->
+    <div class="modal" id="bookModal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3>Book New Appointment</h3>
+                <button class="modal-close" onclick="closeModal('bookModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="bookForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Doctor</label>
+                            <select class="form-select" id="doctorSelect" required>
+                                <option value="">Select Doctor</option>
+                                <option value="Dr. Smith">Dr. Smith - Cardiologist</option>
+                                <option value="Dr. Johnson">Dr. Johnson - General Physician</option>
+                                <option value="Dr. Williams">Dr. Williams - Pediatrician</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Appointment Date</label>
+                            <input type="date" class="form-input" id="appointmentDate" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Time</label>
+                            <input type="time" class="form-input" id="appointmentTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Duration (minutes)</label>
+                            <select class="form-select" id="duration">
+                                <option value="30">30 minutes</option>
+                                <option value="60">60 minutes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reason for Visit</label>
+                        <textarea class="form-input" id="reason" rows="3" placeholder="Describe your symptoms or reason for visit..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes (Optional)</label>
+                        <textarea class="form-input" id="notes" rows="2" placeholder="Any additional information..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('bookModal')">Cancel</button>
+                <button class="btn btn-primary" id="submitBooking">Book Appointment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Appointment Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Appointment</h3>
+                <button class="modal-close" onclick="closeModal('editModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editAppointmentId">
+                    <div class="form-group">
+                        <label class="form-label">Appointment Date</label>
+                        <input type="date" class="form-input" id="editDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Time</label>
+                        <input type="time" class="form-input" id="editTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reason</label>
+                        <textarea class="form-input" id="editReason" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('editModal')">Cancel</button>
+                <button class="btn btn-primary" id="submitEdit">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/static/js/enhanced.js"></script>
+    <script>
+        let appointments = [];
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', async function() {
+            const isAuth = await checkAuth();
+            if (!isAuth) {
+                window.location.href = '/login';
+                return;
+            }
+
+            await loadUserProfile();
+            await loadAppointments();
+            initializeUIComponents();
+        });
+
+        // Load user profile
+        async function loadUserProfile() {
+            try {
+                const profile = await apiClient.getProfile();
+                document.getElementById('userName').textContent = profile.full_name || 'User';
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        // Load appointments
+        async function loadAppointments() {
+            const container = document.getElementById('appointmentsContainer');
+            try {
+                appointments = await apiClient.getAppointments();
+                displayAppointments(appointments);
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                container.innerHTML = '<div class="error-state">Failed to load appointments</div>';
+            }
+        }
+
+        // Display appointments
+        function displayAppointments(data) {
+            const container = document.getElementById('appointmentsContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state animate-fade-in">
+                        <i class="fas fa-calendar-times"></i>
+                        <h3>No appointments found</h3>
+                        <p>Book your first appointment to get started</p>
+                        <button class="btn btn-primary" onclick="openModal('bookModal')">
+                            <i class="fas fa-plus"></i> Book Appointment
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.map((apt, index) => {
+                const date = new Date(apt.appointment_date);
+                const isPast = date < new Date();
+                const statusClass = apt.status === 'confirmed' ? 'success' : apt.status === 'cancelled' ? 'danger' : 'warning';
+
+                return `
+                    <div class="appointment-card animate-fade-in-up" style="animation-delay: ${index * 0.05}s">
+                        <div class="appointment-date-badge">
+                            <div class="badge-day">${date.getDate()}</div>
+                            <div class="badge-month">${date.toLocaleString('default', { month: 'short' })}</div>
+                        </div>
+                        <div class="appointment-content">
+                            <div class="appointment-header">
+                                <h3>${apt.reason || 'General Checkup'}</h3>
+                                <span class="badge badge-${statusClass}">${apt.status}</span>
+                            </div>
+                            <div class="appointment-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-user-md"></i>
+                                    <span>${apt.doctor_name || 'Dr. Smith'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Main Hospital</span>
+                                </div>
+                            </div>
+                            ${apt.notes ? `<div class="appointment-notes"><i class="fas fa-sticky-note"></i> ${apt.notes}</div>` : ''}
+                        </div>
+                        <div class="appointment-actions">
+                            ${!isPast && apt.status !== 'cancelled' ? `
+                                <button class="btn btn-sm btn-outline" onclick="editAppointment(${apt.id})">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="cancelAppointment(${apt.id})">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Filter appointments
+        function filterAppointments() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const time = document.getElementById('timeFilter').value;
+            const now = new Date();
+
+            let filtered = appointments.filter(apt => {
+                const matchesSearch = apt.reason?.toLowerCase().includes(search) || apt.doctor_name?.toLowerCase().includes(search);
+                const matchesStatus = !status || apt.status === status;
+                const aptDate = new Date(apt.appointment_date);
+                const matchesTime = time === 'all' || 
+                    (time === 'upcoming' && aptDate >= now) ||
+                    (time === 'past' && aptDate < now);
+
+                return matchesSearch && matchesStatus && matchesTime;
+            });
+
+            displayAppointments(filtered);
+        }
+
+        // Edit appointment
+        function editAppointment(id) {
+            const apt = appointments.find(a => a.id === id);
+            if (!apt) return;
+
+            document.getElementById('editAppointmentId').value = id;
+            document.getElementById('editDate').value = apt.appointment_date.split(' ')[0];
+            document.getElementById('editTime').value = apt.appointment_date.split(' ')[1];
+            document.getElementById('editReason').value = apt.reason || '';
+
+            openModal('editModal');
+        }
+
+        // Cancel appointment
+        async function cancelAppointment(id) {
+            if (!confirm('Are you sure you want to cancel this appointment?')) return;
+
+            try {
+                await apiClient.updateAppointment(id, { status: 'cancelled' });
+                showToast('Appointment cancelled successfully', 'success');
+                await loadAppointments();
+            } catch (error) {
+                console.error('Error cancelling appointment:', error);
+                showToast('Failed to cancel appointment', 'error');
+            }
+        }
+
+        // Initialize UI components
+        function initializeUIComponents() {
+            // User menu
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            userMenuBtn.addEventListener('click', () => {
+                userDropdown.classList.toggle('show');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!userMenuBtn.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+                e.preventDefault();
+                await apiClient.logout();
+                window.location.href = '/login';
+            });
+
+            // Book appointment button
+            document.getElementById('bookAppointmentBtn').addEventListener('click', () => {
+                openModal('bookModal');
+            });
+
+            // Set min date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appointmentDate').setAttribute('min', today);
+            document.getElementById('editDate').setAttribute('min', today);
+
+            // Submit booking
+            document.getElementById('submitBooking').addEventListener('click', async () => {
+                const form = document.getElementById('bookForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const data = {
+                    doctor_name: document.getElementById('doctorSelect').value,
+                    appointment_date: `${document.getElementById('appointmentDate').value} ${document.getElementById('appointmentTime').value}`,
+                    reason: document.getElementById('reason').value,
+                    notes: document.getElementById('notes').value,
+                    status: 'scheduled'
+                };
+
+                try {
+                    await apiClient.createAppointment(data);
+                    showToast('Appointment booked successfully', 'success');
+                    closeModal('bookModal');
+                    form.reset();
+                    await loadAppointments();
+                } catch (error) {
+                    console.error('Error booking appointment:', error);
+                    showToast('Failed to book appointment', 'error');
+                }
+            });
+
+            // Submit edit
+            document.getElementById('submitEdit').addEventListener('click', async () => {
+                const form = document.getElementById('editForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const id = document.getElementById('editAppointmentId').value;
+                const data = {
+                    appointment_date: `${document.getElementById('editDate').value} ${document.getElementById('editTime').value}`,
+                    reason: document.getElementById('editReason').value
+                };
+
+                try {
+                    await apiClient.updateAppointment(id, data);
+                    showToast('Appointment updated successfully', 'success');
+                    closeModal('editModal');
+                    await loadAppointments();
+                } catch (error) {
+                    console.error('Error updating appointment:', error);
+                    showToast('Failed to update appointment', 'error');
+                }
+            });
+
+            // Search and filters
+            document.getElementById('searchInput').addEventListener('input', filterAppointments);
+            document.getElementById('statusFilter').addEventListener('change', filterAppointments);
+            document.getElementById('timeFilter').addEventListener('change', filterAppointments);
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+    </script>
+</body>
+</html>
