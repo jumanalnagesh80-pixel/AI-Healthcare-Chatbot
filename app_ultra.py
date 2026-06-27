@@ -930,26 +930,8 @@ Crisis           > 180   OR  > 120  (Call 911!)
 • [DASH Diet Plan] - Get meal guide
 
 Would you like to book an appointment with a cardiologist?"""
-• Step outside for fresh air
-• Listen to calming music
-
-🏃 **Long-term Management:**
-• Regular exercise (30 min/day)
-• Consistent sleep schedule (7-9 hours)
-• Mindfulness or meditation
-• Connect with friends/family
-
-📞 **Professional Help:**
-• Therapy/Counseling
-• Support groups
-
-🆘 **Crisis Resources:**
-• 988 Suicide & Crisis Lifeline
-• Call or text 988
-
-Would you like to book mental health appointment?"""
     
-    elif any(word in message_lower for word in ['diabetes', 'blood sugar', 'glucose']):
+    elif any(word in message_lower for word in ['diabetes', 'blood sugar', 'glucose', 'insulin']):
         return f"""Hi {user_name}! Diabetes management:
 
 📊 **Blood Sugar Monitoring:**
