@@ -230,6 +230,65 @@ def init_db():
         )
     ''')
     
+    # Appointment slots table - NEW!
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS appointment_slots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doctor_id INTEGER NOT NULL,
+            slot_date TEXT NOT NULL,
+            slot_time TEXT NOT NULL,
+            is_booked INTEGER DEFAULT 0,
+            booked_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (doctor_id) REFERENCES doctors (id),
+            FOREIGN KEY (booked_by) REFERENCES users (id)
+        )
+    ''')
+    
+    # Vital Signs table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS vital_signs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            blood_pressure TEXT,
+            heart_rate INTEGER,
+            temperature REAL,
+            weight REAL,
+            bmi REAL,
+            recorded_date TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Files table (for medical document uploads)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS files (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            filename TEXT NOT NULL,
+            filepath TEXT NOT NULL,
+            file_type TEXT,
+            description TEXT,
+            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Notifications table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            type TEXT DEFAULT 'info',
+            is_read INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
     # Create default admin if not exists
     cursor.execute('SELECT COUNT(*) FROM admins')
     if cursor.fetchone()[0] == 0:
@@ -294,67 +353,7 @@ def init_db():
         
         print("✅ Added 10 specialist doctors to database")
     
-    # Don't close connection yet - more tables to create!
-    
-    # Vital Signs table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS vital_signs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            blood_pressure TEXT,
-            heart_rate INTEGER,
-            temperature REAL,
-            weight REAL,
-            bmi REAL,
-            recorded_date TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    
-    # Files table (for medical document uploads)
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS files (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            filename TEXT NOT NULL,
-            filepath TEXT NOT NULL,
-            file_type TEXT,
-            description TEXT,
-            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    
-    # Notifications table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS notifications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            title TEXT NOT NULL,
-            message TEXT NOT NULL,
-            type TEXT DEFAULT 'info',
-            is_read INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    
-    # NOW commit and close
-    conn.commit()
-    conn.close()
-    print("✅ Advanced database initialized successfully!")
-    
-    # Create default admin if not exists
-    cursor.execute('SELECT COUNT(*) FROM admins')
-    if cursor.fetchone()[0] == 0:
-        admin_password = hash_password('admin123')
-        cursor.execute('''
-            INSERT INTO admins (name, email, password, role)
-            VALUES (?, ?, ?, ?)
-        ''', ('Admin User', 'admin@healthcare.com', admin_password, 'super_admin'))
-        print("✅ Default admin created: admin@healthcare.com / admin123")
-    
+    # NOW commit and close - ONLY ONCE at the very end!
     conn.commit()
     conn.close()
     print("✅ Advanced database initialized successfully!")
