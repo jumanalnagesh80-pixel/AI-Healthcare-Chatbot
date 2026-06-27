@@ -170,6 +170,16 @@
 
         // Initialize on load
         document.addEventListener('DOMContentLoaded', async function() {
+            // Check authentication
+            async function checkAuth() {
+                try {
+                    const result = await API.auth.checkAuth();
+                    return result.authenticated;
+                } catch (error) {
+                    return false;
+                }
+            }
+
             const isAuth = await checkAuth();
             if (!isAuth) {
                 window.location.href = '/login';
@@ -184,10 +194,11 @@
         // Load user profile
         async function loadUserProfile() {
             try {
-                const profile = await apiClient.getProfile();
+                const profile = await API.profile.get();
                 document.getElementById('userName').textContent = profile.full_name || 'User';
             } catch (error) {
                 console.error('Error loading profile:', error);
+                document.getElementById('userName').textContent = 'User';
             }
         }
 
@@ -195,12 +206,14 @@
         async function loadPrescriptions() {
             const container = document.getElementById('prescriptionsContainer');
             try {
-                prescriptions = await apiClient.getPrescriptions();
+                const result = await API.prescriptions.list();
+                prescriptions = result.prescriptions || result || [];
                 updateStats();
                 displayPrescriptions(prescriptions);
             } catch (error) {
                 console.error('Error loading prescriptions:', error);
                 container.innerHTML = '<div class="error-state">Failed to load prescriptions</div>';
+                showToast('Failed to load prescriptions', 'danger');
             }
         }
 
@@ -390,8 +403,16 @@
             // Logout
             document.getElementById('logoutBtn').addEventListener('click', async (e) => {
                 e.preventDefault();
-                await apiClient.logout();
-                window.location.href = '/login';
+                try {
+                    await API.auth.logout();
+                    showToast('Logged out successfully', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 1000);
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    window.location.href = '/login';
+                }
             });
 
             // Search and filters

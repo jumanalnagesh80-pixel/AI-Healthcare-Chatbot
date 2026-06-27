@@ -102,7 +102,8 @@ const API = {
     // Vital signs endpoints
     vitalSigns: {
         list: (params) => API.request('/api/vital-signs' + (params ? `?${new URLSearchParams(params)}` : '')),
-        create: (data) => API.request('/api/vital-signs', { method: 'POST', body: data })
+        create: (data) => API.request('/api/vital-signs', { method: 'POST', body: data }),
+        delete: (id) => API.request(`/api/vital-signs/${id}`, { method: 'DELETE' })
     },
     
     // Lab reports endpoints
