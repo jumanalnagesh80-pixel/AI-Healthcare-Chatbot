@@ -1,9 +1,9 @@
 """
-Ultra-Advanced AI Healthcare System - Professional Web Application
+AI Healthcare Chatbot - Professional Web Application
 Author: Kiro AI Assistant  
 Date: June 27, 2026
-Description: World-class healthcare platform with modern UI, Chart.js, file uploads, animations
-Features: Glassmorphism UI, data visualization, email notifications, dark mode, real-time updates
+Description: Advanced AI-powered healthcare platform with modern UI, real-time appointments, and intelligent chatbot
+Features: Smart chatbot, real doctors, appointment booking, medical records, glassmorphism UI, dark mode
 """
 
 from flask import Flask, render_template_string, request, jsonify, session, redirect, url_for, send_file

@@ -9,7 +9,7 @@ MODERN_INDEX_HTML = '''<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HealthCare Pro - Your AI Health Assistant</title>
+    <title>AI Healthcare Chatbot - Your Personal Health Assistant</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -460,7 +460,7 @@ MODERN_INDEX_HTML = '''<!DOCTYPE html>
         <div class="nav-content">
             <div class="logo">
                 <i class="fas fa-heartbeat"></i>
-                HealthCare Pro
+                AI Healthcare Chatbot
             </div>
             <div class="nav-links">
                 <a href="#features">Features</a>
@@ -600,7 +600,7 @@ MODERN_INDEX_HTML = '''<!DOCTYPE html>
                 HealthCare Pro
             </div>
             <p>Your trusted partner in health management</p>
-            <p>&copy; 2026 HealthCare Pro. All rights reserved.</p>
+            <p>&copy; 2026 AI Healthcare Chatbot. All rights reserved.</p>
             <div class="social-links">
                 <a href="#"><i class="fab fa-facebook"></i></a>
                 <a href="#"><i class="fab fa-twitter"></i></a>
@@ -658,7 +658,7 @@ MODERN_DASHBOARD_HTML = '''<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - HealthCare Pro</title>
+    <title>Dashboard - AI Healthcare Chatbot</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -965,7 +965,7 @@ MODERN_DASHBOARD_HTML = '''<!DOCTYPE html>
         <div class="nav-content">
             <div class="logo">
                 <i class="fas fa-heartbeat"></i>
-                HealthCare Pro
+                AI Healthcare Chatbot
             </div>
             <div class="nav-links">
                 <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
@@ -1205,7 +1205,7 @@ FILES_HTML = '''<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Files - HealthCare Pro</title>
+    <title>My Files - AI Healthcare Chatbot</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -1363,7 +1363,7 @@ FILES_HTML = '''<!DOCTYPE html>
         <div class="nav-content">
             <div class="logo">
                 <i class="fas fa-heartbeat"></i>
-                HealthCare Pro
+                AI Healthcare Chatbot
             </div>
             <div class="nav-links">
                 <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>

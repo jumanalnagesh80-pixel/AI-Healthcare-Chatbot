@@ -7,7 +7,7 @@ ENHANCED_APPOINTMENTS_HTML = '''<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Appointment - HealthCare Pro</title>
+    <title>Book Appointment - AI Healthcare Chatbot</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -373,7 +373,7 @@ ENHANCED_APPOINTMENTS_HTML = '''<!DOCTYPE html>
         <div class="nav-content">
             <div class="logo">
                 <i class="fas fa-heartbeat"></i>
-                HealthCare Pro
+                AI Healthcare Chatbot
             </div>
             <div class="nav-links">
                 <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
