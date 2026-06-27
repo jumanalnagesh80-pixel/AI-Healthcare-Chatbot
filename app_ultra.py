@@ -362,6 +362,71 @@ def hash_password(password):
     """Hash password for security"""
     return hashlib.sha256(password.encode()).hexdigest()
 
+# ==================== HTML TEMPLATES ====================
+# All templates must be defined BEFORE routes to avoid NameError
+
+MEDICAL_RECORDS_HTML = '''<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Medical Records</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#f5f7fa}.navbar{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px}.navbar-content{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}.nav-links a{color:white;text-decoration:none;margin-left:20px;padding:8px 16px;border-radius:8px}.nav-links a:hover{background:rgba(255,255,255,0.2)}.container{max-width:1200px;margin:40px auto;padding:0 20px}.section{background:white;padding:30px;border-radius:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1);margin-bottom:20px}.record-card{padding:20px;background:#f8f9fa;border-radius:10px;margin-bottom:15px;border-left:4px solid #667eea}.record-card h4{color:#667eea;margin-bottom:10px}.record-card p{color:#666;margin:5px 0}</style></head>
+<body><div class="navbar"><div class="navbar-content"><h1>🏥 Medical Records</h1><div class="nav-links">
+<a href="/dashboard">Dashboard</a><a href="/chat">Chat</a><a href="/appointments">Appointments</a>
+<a href="/medical-records">Records</a><a href="/prescriptions">Prescriptions</a><a href="/lab-reports">Lab Reports</a>
+<a href="/vital-signs">Vitals</a><a href="/logout">Logout</a></div></div></div>
+<div class="container"><div class="section"><h2>Your Medical Records</h2>
+{%if records%}{%for rec in records%}<div class="record-card"><h4>{{rec[2]}} ({{rec[1]}})</h4>
+<p><strong>Date:</strong> {{rec[5]}}</p><p><strong>Doctor:</strong> {{rec[4]or'N/A'}}</p>
+<p><strong>Description:</strong> {{rec[3]or'No description'}}</p></div>{%endfor%}
+{%else%}<p style="color:#666">No medical records found.</p>{%endif%}</div></div></body></html>'''
+
+PRESCRIPTIONS_HTML = '''<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Prescriptions</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#f5f7fa}.navbar{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px}.navbar-content{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}.nav-links a{color:white;text-decoration:none;margin-left:20px;padding:8px 16px;border-radius:8px}.nav-links a:hover{background:rgba(255,255,255,0.2)}.container{max-width:1200px;margin:40px auto;padding:0 20px}.section{background:white;padding:30px;border-radius:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.prescription-card{padding:20px;background:#f8f9fa;border-radius:10px;margin-bottom:15px;border-left:4px solid #28a745}.prescription-card h4{color:#28a745;margin-bottom:10px}.prescription-card p{color:#666;margin:5px 0}.status-badge{padding:4px 10px;border-radius:12px;font-size:0.85em}.active{background:#d4edda;color:#155724}.expired{background:#f8d7da;color:#721c24}</style></head>
+<body><div class="navbar"><div class="navbar-content"><h1>💊 Prescriptions</h1><div class="nav-links">
+<a href="/dashboard">Dashboard</a><a href="/chat">Chat</a><a href="/appointments">Appointments</a>
+<a href="/medical-records">Records</a><a href="/prescriptions">Prescriptions</a><a href="/lab-reports">Lab Reports</a>
+<a href="/vital-signs">Vitals</a><a href="/logout">Logout</a></div></div></div>
+<div class="container"><div class="section"><h2>Your Prescriptions</h2>
+{%if prescriptions%}{%for rx in prescriptions%}<div class="prescription-card">
+<h4>{{rx[2]}} <span class="status-badge {{rx[8]}}">{{rx[8]}}</span></h4>
+<p><strong>Doctor:</strong> {{rx[1]}}</p><p><strong>Dosage:</strong> {{rx[3]}}</p>
+<p><strong>Frequency:</strong> {{rx[4]}}</p><p><strong>Duration:</strong> {{rx[5]}}</p>
+<p><strong>Instructions:</strong> {{rx[6]or'Take as directed'}}</p>
+<p><strong>Prescribed:</strong> {{rx[7]}}</p></div>{%endfor%}
+{%else%}<p style="color:#666">No prescriptions found.</p>{%endif%}</div></div></body></html>'''
+
+LAB_REPORTS_HTML = '''<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Lab Reports</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#f5f7fa}.navbar{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px}.navbar-content{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}.nav-links a{color:white;text-decoration:none;margin-left:20px;padding:8px 16px;border-radius:8px}.nav-links a:hover{background:rgba(255,255,255,0.2)}.container{max-width:1200px;margin:40px auto;padding:0 20px}.section{background:white;padding:30px;border-radius:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:12px;text-align:left;border-bottom:1px solid #e0e0e0}th{background:#f8f9fa;font-weight:600}.normal{color:#28a745}.abnormal{color:#dc3545}</style></head>
+<body><div class="navbar"><div class="navbar-content"><h1>🔬 Lab Reports</h1><div class="nav-links">
+<a href="/dashboard">Dashboard</a><a href="/chat">Chat</a><a href="/appointments">Appointments</a>
+<a href="/medical-records">Records</a><a href="/prescriptions">Prescriptions</a><a href="/lab-reports">Lab Reports</a>
+<a href="/vital-signs">Vitals</a><a href="/logout">Logout</a></div></div></div>
+<div class="container"><div class="section"><h2>Your Lab Reports</h2>
+{%if reports%}<table><thead><tr><th>Test Name</th><th>Type</th><th>Result</th><th>Reference Range</th><th>Status</th><th>Date</th></tr></thead><tbody>
+{%for rep in reports%}<tr><td>{{rep[1]}}</td><td>{{rep[2]}}</td><td>{{rep[3]}}</td><td>{{rep[4]or'N/A'}}</td><td class="{{rep[5]or'normal'}}">{{rep[5]or'Normal'}}</td><td>{{rep[6]}}</td></tr>{%endfor%}</tbody></table>
+{%else%}<p style="color:#666">No lab reports found.</p>{%endif%}</div></div></body></html>'''
+
+VITAL_SIGNS_HTML = '''<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Vital Signs</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#f5f7fa}.navbar{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px}.navbar-content{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}.nav-links a{color:white;text-decoration:none;margin-left:20px;padding:8px 16px;border-radius:8px}.nav-links a:hover{background:rgba(255,255,255,0.2)}.container{max-width:1200px;margin:40px auto;padding:0 20px}.section{background:white;padding:30px;border-radius:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1);margin-bottom:20px}.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px}.form-group{margin-bottom:15px}.form-group label{display:block;color:#333;margin-bottom:5px;font-weight:500}.form-group input{width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px}.btn{padding:12px 30px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;border-radius:8px;font-size:1em;font-weight:bold;cursor:pointer}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:12px;text-align:left;border-bottom:1px solid #e0e0e0}th{background:#f8f9fa;font-weight:600}</style></head>
+<body><div class="navbar"><div class="navbar-content"><h1>📈 Vital Signs</h1><div class="nav-links">
+<a href="/dashboard">Dashboard</a><a href="/chat">Chat</a><a href="/appointments">Appointments</a>
+<a href="/medical-records">Records</a><a href="/prescriptions">Prescriptions</a><a href="/lab-reports">Lab Reports</a>
+<a href="/vital-signs">Vitals</a><a href="/logout">Logout</a></div></div></div>
+<div class="container"><div class="section"><h2>Record Vital Signs</h2>
+<form id="vitalForm"><div class="form-grid"><div class="form-group"><label>Blood Pressure</label><input type="text" id="bp" placeholder="120/80"></div>
+<div class="form-group"><label>Heart Rate (bpm)</label><input type="number" id="hr" placeholder="75"></div>
+<div class="form-group"><label>Temperature (°F)</label><input type="number" step="0.1" id="temp" placeholder="98.6"></div>
+<div class="form-group"><label>Weight (lbs)</label><input type="number" step="0.1" id="weight" placeholder="150"></div>
+<div class="form-group"><label>BMI</label><input type="number" step="0.1" id="bmi" placeholder="22.5"></div>
+<div class="form-group"><label>Date</label><input type="date" id="date" required></div></div>
+<button type="submit" class="btn">Record Vitals</button></form></div>
+<div class="section"><h2>Your Vital Signs History</h2>
+{%if vitals%}<table><thead><tr><th>Date</th><th>BP</th><th>HR</th><th>Temp</th><th>Weight</th><th>BMI</th></tr></thead><tbody>
+{%for v in vitals%}<tr><td>{{v[6]}}</td><td>{{v[1]or'-'}}</td><td>{{v[2]or'-'}}</td><td>{{v[3]or'-'}}</td><td>{{v[4]or'-'}}</td><td>{{v[5]or'-'}}</td></tr>{%endfor%}</tbody></table>
+{%else%}<p style="color:#666">No vital signs recorded yet.</p>{%endif%}</div></div>
+<script>document.getElementById('date').value=new Date().toISOString().split('T')[0];document.getElementById('vitalForm').addEventListener('submit',async function(e){e.preventDefault();const data={blood_pressure:document.getElementById('bp').value,heart_rate:document.getElementById('hr').value,temperature:document.getElementById('temp').value,weight:document.getElementById('weight').value,bmi:document.getElementById('bmi').value,recorded_date:document.getElementById('date').value};try{const response=await fetch('/api/vital-signs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await response.json();if(result.success){alert('Vital signs recorded!');location.reload()}else{alert('Failed to record')}}catch(error){alert('Error recording vital signs')}});</script></body></html>'''
+
 # ==================== AUTHENTICATION DECORATORS ====================
 
 def login_required(f):
@@ -2374,6 +2439,8 @@ from modern_templates import MODERN_INDEX_HTML, MODERN_DASHBOARD_HTML, FILES_HTM
 
 INDEX_HTML = MODERN_INDEX_HTML
 
+# ==================== AUTHENTICATION & NAVIGATION TEMPLATES ====================
+
 REGISTER_HTML = '''
 <!DOCTYPE html>
 <html lang="en">
@@ -3474,64 +3541,5 @@ ADMIN_APPOINTMENTS_HTML = '''<!DOCTYPE html>
 <table><thead><tr><th>ID</th><th>Patient</th><th>Email</th><th>Doctor</th><th>Specialty</th><th>Date</th><th>Time</th><th>Status</th><th>Symptoms</th></tr></thead><tbody>
 {%for apt in appointments%}<tr><td>{{apt[0]}}</td><td>{{apt[1]}}</td><td>{{apt[2]}}</td><td>{{apt[3]}}</td><td>{{apt[4]}}</td><td>{{apt[5]}}</td><td>{{apt[6]}}</td><td><span class="badge {{apt[7]}}">{{apt[7]}}</span></td><td>{{apt[8]or'-'}}</td></tr>{%endfor%}</tbody></table></div></div></body></html>'''
 
-MEDICAL_RECORDS_HTML = '''<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Medical Records</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#f5f7fa}.navbar{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px}.navbar-content{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}.nav-links a{color:white;text-decoration:none;margin-left:20px;padding:8px 16px;border-radius:8px}.nav-links a:hover{background:rgba(255,255,255,0.2)}.container{max-width:1200px;margin:40px auto;padding:0 20px}.section{background:white;padding:30px;border-radius:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1);margin-bottom:20px}.record-card{padding:20px;background:#f8f9fa;border-radius:10px;margin-bottom:15px;border-left:4px solid #667eea}.record-card h4{color:#667eea;margin-bottom:10px}.record-card p{color:#666;margin:5px 0}</style></head>
-<body><div class="navbar"><div class="navbar-content"><h1>🏥 Medical Records</h1><div class="nav-links">
-<a href="/dashboard">Dashboard</a><a href="/chat">Chat</a><a href="/appointments">Appointments</a>
-<a href="/medical-records">Records</a><a href="/prescriptions">Prescriptions</a><a href="/lab-reports">Lab Reports</a>
-<a href="/vital-signs">Vitals</a><a href="/logout">Logout</a></div></div></div>
-<div class="container"><div class="section"><h2>Your Medical Records</h2>
-{%if records%}{%for rec in records%}<div class="record-card"><h4>{{rec[2]}} ({{rec[1]}})</h4>
-<p><strong>Date:</strong> {{rec[5]}}</p><p><strong>Doctor:</strong> {{rec[4]or'N/A'}}</p>
-<p><strong>Description:</strong> {{rec[3]or'No description'}}</p></div>{%endfor%}
-{%else%}<p style="color:#666">No medical records found.</p>{%endif%}</div></div></body></html>'''
-
-PRESCRIPTIONS_HTML = '''<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Prescriptions</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#f5f7fa}.navbar{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px}.navbar-content{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}.nav-links a{color:white;text-decoration:none;margin-left:20px;padding:8px 16px;border-radius:8px}.nav-links a:hover{background:rgba(255,255,255,0.2)}.container{max-width:1200px;margin:40px auto;padding:0 20px}.section{background:white;padding:30px;border-radius:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}.prescription-card{padding:20px;background:#f8f9fa;border-radius:10px;margin-bottom:15px;border-left:4px solid #28a745}.prescription-card h4{color:#28a745;margin-bottom:10px}.prescription-card p{color:#666;margin:5px 0}.status-badge{padding:4px 10px;border-radius:12px;font-size:0.85em}.active{background:#d4edda;color:#155724}.expired{background:#f8d7da;color:#721c24}</style></head>
-<body><div class="navbar"><div class="navbar-content"><h1>💊 Prescriptions</h1><div class="nav-links">
-<a href="/dashboard">Dashboard</a><a href="/chat">Chat</a><a href="/appointments">Appointments</a>
-<a href="/medical-records">Records</a><a href="/prescriptions">Prescriptions</a><a href="/lab-reports">Lab Reports</a>
-<a href="/vital-signs">Vitals</a><a href="/logout">Logout</a></div></div></div>
-<div class="container"><div class="section"><h2>Your Prescriptions</h2>
-{%if prescriptions%}{%for rx in prescriptions%}<div class="prescription-card">
-<h4>{{rx[2]}} <span class="status-badge {{rx[8]}}">{{rx[8]}}</span></h4>
-<p><strong>Doctor:</strong> {{rx[1]}}</p><p><strong>Dosage:</strong> {{rx[3]}}</p>
-<p><strong>Frequency:</strong> {{rx[4]}}</p><p><strong>Duration:</strong> {{rx[5]}}</p>
-<p><strong>Instructions:</strong> {{rx[6]or'Take as directed'}}</p>
-<p><strong>Prescribed:</strong> {{rx[7]}}</p></div>{%endfor%}
-{%else%}<p style="color:#666">No prescriptions found.</p>{%endif%}</div></div></body></html>'''
-
-LAB_REPORTS_HTML = '''<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Lab Reports</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#f5f7fa}.navbar{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px}.navbar-content{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}.nav-links a{color:white;text-decoration:none;margin-left:20px;padding:8px 16px;border-radius:8px}.nav-links a:hover{background:rgba(255,255,255,0.2)}.container{max-width:1200px;margin:40px auto;padding:0 20px}.section{background:white;padding:30px;border-radius:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:12px;text-align:left;border-bottom:1px solid #e0e0e0}th{background:#f8f9fa;font-weight:600}.normal{color:#28a745}.abnormal{color:#dc3545}</style></head>
-<body><div class="navbar"><div class="navbar-content"><h1>🔬 Lab Reports</h1><div class="nav-links">
-<a href="/dashboard">Dashboard</a><a href="/chat">Chat</a><a href="/appointments">Appointments</a>
-<a href="/medical-records">Records</a><a href="/prescriptions">Prescriptions</a><a href="/lab-reports">Lab Reports</a>
-<a href="/vital-signs">Vitals</a><a href="/logout">Logout</a></div></div></div>
-<div class="container"><div class="section"><h2>Your Lab Reports</h2>
-{%if reports%}<table><thead><tr><th>Test Name</th><th>Type</th><th>Result</th><th>Reference Range</th><th>Status</th><th>Date</th></tr></thead><tbody>
-{%for rep in reports%}<tr><td>{{rep[1]}}</td><td>{{rep[2]}}</td><td>{{rep[3]}}</td><td>{{rep[4]or'N/A'}}</td><td class="{{rep[5]or'normal'}}">{{rep[5]or'Normal'}}</td><td>{{rep[6]}}</td></tr>{%endfor%}</tbody></table>
-{%else%}<p style="color:#666">No lab reports found.</p>{%endif%}</div></div></body></html>'''
-
-VITAL_SIGNS_HTML = '''<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Vital Signs</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#f5f7fa}.navbar{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px}.navbar-content{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}.nav-links a{color:white;text-decoration:none;margin-left:20px;padding:8px 16px;border-radius:8px}.nav-links a:hover{background:rgba(255,255,255,0.2)}.container{max-width:1200px;margin:40px auto;padding:0 20px}.section{background:white;padding:30px;border-radius:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1);margin-bottom:20px}.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px}.form-group{margin-bottom:15px}.form-group label{display:block;color:#333;margin-bottom:5px;font-weight:500}.form-group input{width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px}.btn{padding:12px 30px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;border-radius:8px;font-size:1em;font-weight:bold;cursor:pointer}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:12px;text-align:left;border-bottom:1px solid #e0e0e0}th{background:#f8f9fa;font-weight:600}</style></head>
-<body><div class="navbar"><div class="navbar-content"><h1>📈 Vital Signs</h1><div class="nav-links">
-<a href="/dashboard">Dashboard</a><a href="/chat">Chat</a><a href="/appointments">Appointments</a>
-<a href="/medical-records">Records</a><a href="/prescriptions">Prescriptions</a><a href="/lab-reports">Lab Reports</a>
-<a href="/vital-signs">Vitals</a><a href="/logout">Logout</a></div></div></div>
-<div class="container"><div class="section"><h2>Record Vital Signs</h2>
-<form id="vitalForm"><div class="form-grid"><div class="form-group"><label>Blood Pressure</label><input type="text" id="bp" placeholder="120/80"></div>
-<div class="form-group"><label>Heart Rate (bpm)</label><input type="number" id="hr" placeholder="75"></div>
-<div class="form-group"><label>Temperature (°F)</label><input type="number" step="0.1" id="temp" placeholder="98.6"></div>
-<div class="form-group"><label>Weight (lbs)</label><input type="number" step="0.1" id="weight" placeholder="150"></div>
-<div class="form-group"><label>BMI</label><input type="number" step="0.1" id="bmi" placeholder="22.5"></div>
-<div class="form-group"><label>Date</label><input type="date" id="date" required></div></div>
-<button type="submit" class="btn">Record Vitals</button></form></div>
-<div class="section"><h2>Your Vital Signs History</h2>
-{%if vitals%}<table><thead><tr><th>Date</th><th>BP</th><th>HR</th><th>Temp</th><th>Weight</th><th>BMI</th></tr></thead><tbody>
-{%for v in vitals%}<tr><td>{{v[6]}}</td><td>{{v[1]or'-'}}</td><td>{{v[2]or'-'}}</td><td>{{v[3]or'-'}}</td><td>{{v[4]or'-'}}</td><td>{{v[5]or'-'}}</td></tr>{%endfor%}</tbody></table>
-{%else%}<p style="color:#666">No vital signs recorded yet.</p>{%endif%}</div></div>
-<script>document.getElementById('date').value=new Date().toISOString().split('T')[0];document.getElementById('vitalForm').addEventListener('submit',async function(e){e.preventDefault();const data={blood_pressure:document.getElementById('bp').value,heart_rate:document.getElementById('hr').value,temperature:document.getElementById('temp').value,weight:document.getElementById('weight').value,bmi:document.getElementById('bmi').value,recorded_date:document.getElementById('date').value};try{const response=await fetch('/api/vital-signs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await response.json();if(result.success){alert('Vital signs recorded!');location.reload()}else{alert('Failed to record')}}catch(error){alert('Error recording vital signs')}});</script></body></html>'''
+# Note: MEDICAL_RECORDS_HTML, PRESCRIPTIONS_HTML, LAB_REPORTS_HTML, and VITAL_SIGNS_HTML
+# are now defined at the top of the file (after line 2374) to avoid NameError
