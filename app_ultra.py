@@ -193,6 +193,153 @@ def init_db():
         )
     ''')
     
+    # Doctors table - NEW!
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS doctors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            specialty TEXT NOT NULL,
+            qualification TEXT NOT NULL,
+            experience INTEGER,
+            phone TEXT NOT NULL,
+            email TEXT,
+            consultation_fee REAL,
+            available_days TEXT,
+            available_time TEXT,
+            hospital TEXT,
+            rating REAL DEFAULT 4.5,
+            total_patients INTEGER DEFAULT 0,
+            image_url TEXT,
+            bio TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Appointment slots table - NEW!
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS appointment_slots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doctor_id INTEGER NOT NULL,
+            slot_date TEXT NOT NULL,
+            slot_time TEXT NOT NULL,
+            is_booked INTEGER DEFAULT 0,
+            booked_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (doctor_id) REFERENCES doctors (id),
+            FOREIGN KEY (booked_by) REFERENCES users (id)
+        )
+    ''')
+    
+    # Create default admin if not exists
+    cursor.execute('SELECT COUNT(*) FROM admins')
+    if cursor.fetchone()[0] == 0:
+        admin_password = hash_password('admin123')
+        cursor.execute('''
+            INSERT INTO admins (name, email, password, role)
+            VALUES (?, ?, ?, ?)
+        ''', ('Admin User', 'admin@healthcare.com', admin_password, 'super_admin'))
+        print("✅ Default admin created: admin@healthcare.com / admin123")
+    
+    # Add sample doctors if table is empty
+    cursor.execute('SELECT COUNT(*) FROM doctors')
+    if cursor.fetchone()[0] == 0:
+        doctors_data = [
+            ('Dr. Sarah Johnson', 'Cardiology', 'MD, FACC', 15, '+1-555-0101', 'dr.sarah@healthcare.com', 150.00, 
+             'Mon,Tue,Wed,Thu,Fri', '09:00-17:00', 'City General Hospital', 4.8, 1250, 
+             'https://via.placeholder.com/150', 'Specialist in heart diseases and cardiovascular health'),
+            
+            ('Dr. Michael Chen', 'Neurology', 'MD, PhD', 12, '+1-555-0102', 'dr.chen@healthcare.com', 175.00,
+             'Mon,Wed,Fri', '10:00-18:00', 'Central Medical Center', 4.9, 980,
+             'https://via.placeholder.com/150', 'Expert in brain and nervous system disorders'),
+            
+            ('Dr. Emily Rodriguez', 'Pediatrics', 'MD, FAAP', 10, '+1-555-0103', 'dr.emily@healthcare.com', 120.00,
+             'Mon,Tue,Wed,Thu,Fri,Sat', '08:00-16:00', 'Children\'s Health Clinic', 4.7, 2100,
+             'https://via.placeholder.com/150', 'Dedicated to children\'s health and wellbeing'),
+            
+            ('Dr. James Wilson', 'Orthopedics', 'MD, MS Ortho', 18, '+1-555-0104', 'dr.wilson@healthcare.com', 160.00,
+             'Tue,Thu,Sat', '09:00-15:00', 'Bone & Joint Hospital', 4.8, 1450,
+             'https://via.placeholder.com/150', 'Specialized in bone, joint and muscle treatments'),
+            
+            ('Dr. Lisa Thompson', 'Dermatology', 'MD, FAAD', 8, '+1-555-0105', 'dr.lisa@healthcare.com', 130.00,
+             'Mon,Wed,Thu,Fri', '10:00-17:00', 'Skin Care Center', 4.6, 890,
+             'https://via.placeholder.com/150', 'Expert in skin conditions and cosmetic procedures'),
+            
+            ('Dr. Robert Martinez', 'General Medicine', 'MBBS, MD', 20, '+1-555-0106', 'dr.robert@healthcare.com', 100.00,
+             'Mon,Tue,Wed,Thu,Fri,Sat,Sun', '08:00-20:00', 'City General Hospital', 4.9, 3200,
+             'https://via.placeholder.com/150', 'Primary care physician with extensive experience'),
+            
+            ('Dr. Amanda Davis', 'Gynecology', 'MD, FACOG', 14, '+1-555-0107', 'dr.amanda@healthcare.com', 140.00,
+             'Mon,Tue,Wed,Thu,Fri', '09:00-17:00', 'Women\'s Health Center', 4.8, 1680,
+             'https://via.placeholder.com/150', 'Women\'s health specialist and obstetrician'),
+            
+            ('Dr. David Kim', 'Psychiatry', 'MD, Psychiatrist', 11, '+1-555-0108', 'dr.kim@healthcare.com', 180.00,
+             'Mon,Tue,Wed,Thu,Fri', '10:00-18:00', 'Mental Health Institute', 4.9, 1100,
+             'https://via.placeholder.com/150', 'Mental health expert specializing in anxiety and depression'),
+            
+            ('Dr. Jennifer Lee', 'Endocrinology', 'MD, FACE', 13, '+1-555-0109', 'dr.jennifer@healthcare.com', 155.00,
+             'Mon,Wed,Fri', '09:00-16:00', 'Diabetes Care Center', 4.7, 950,
+             'https://via.placeholder.com/150', 'Diabetes and hormone disorder specialist'),
+            
+            ('Dr. Christopher Brown', 'Gastroenterology', 'MD, FACG', 16, '+1-555-0110', 'dr.chris@healthcare.com', 165.00,
+             'Tue,Wed,Thu,Fri', '10:00-17:00', 'Digestive Health Clinic', 4.8, 1320,
+             'https://via.placeholder.com/150', 'Expert in digestive system and liver diseases')
+        ]
+        
+        cursor.executemany('''
+            INSERT INTO doctors (name, specialty, qualification, experience, phone, email, 
+                               consultation_fee, available_days, available_time, hospital, 
+                               rating, total_patients, image_url, bio)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', doctors_data)
+        
+        print("✅ Added 10 specialist doctors to database")
+    
+    conn.commit()
+    conn.close()
+    print("✅ Advanced database initialized successfully!")
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS vital_signs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            blood_pressure TEXT,
+            heart_rate INTEGER,
+            temperature REAL,
+            weight REAL,
+            bmi REAL,
+            recorded_date TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Files table (for medical document uploads)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS files (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            filename TEXT NOT NULL,
+            filepath TEXT NOT NULL,
+            file_type TEXT,
+            description TEXT,
+            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Notifications table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            type TEXT DEFAULT 'info',
+            is_read INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
     # Create default admin if not exists
     cursor.execute('SELECT COUNT(*) FROM admins')
     if cursor.fetchone()[0] == 0:
@@ -1593,7 +1740,7 @@ def api_chat():
 
 @app.route('/appointments')
 def appointments():
-    """Appointments page - requires login"""
+    """ENHANCED Appointments page with real doctors - requires login"""
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
@@ -1603,25 +1750,130 @@ def appointments():
     cursor.execute('''
         SELECT id, doctor_name, specialty, appointment_date, appointment_time, status, symptoms
         FROM appointments
-
         WHERE user_id = ?
         ORDER BY appointment_date DESC, appointment_time DESC
     ''', (session['user_id'],))
     appointments_list = cursor.fetchall()
     conn.close()
     
-    return render_template_string(APPOINTMENTS_HTML,
+    # Import enhanced template
+    from enhanced_appointments_template import ENHANCED_APPOINTMENTS_HTML
+    
+    return render_template_string(ENHANCED_APPOINTMENTS_HTML,
                                  user_name=session['user_name'],
                                  appointments=appointments_list)
 
+@app.route('/api/doctors', methods=['GET'])
+@login_required
+def api_get_doctors():
+    """API endpoint to get all doctors"""
+    try:
+        specialty = request.args.get('specialty', '')
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        if specialty:
+            cursor.execute('''
+                SELECT id, name, specialty, qualification, experience, phone, email,
+                       consultation_fee, available_days, available_time, hospital, 
+                       rating, total_patients, image_url, bio
+                FROM doctors
+                WHERE specialty = ?
+                ORDER BY rating DESC
+            ''', (specialty,))
+        else:
+            cursor.execute('''
+                SELECT id, name, specialty, qualification, experience, phone, email,
+                       consultation_fee, available_days, available_time, hospital, 
+                       rating, total_patients, image_url, bio
+                FROM doctors
+                ORDER BY specialty, rating DESC
+            ''')
+        
+        doctors = cursor.fetchall()
+        conn.close()
+        
+        doctors_list = []
+        for doc in doctors:
+            doctors_list.append({
+                'id': doc[0],
+                'name': doc[1],
+                'specialty': doc[2],
+                'qualification': doc[3],
+                'experience': doc[4],
+                'phone': doc[5],
+                'email': doc[6],
+                'consultation_fee': doc[7],
+                'available_days': doc[8],
+                'available_time': doc[9],
+                'hospital': doc[10],
+                'rating': doc[11],
+                'total_patients': doc[12],
+                'image_url': doc[13],
+                'bio': doc[14]
+            })
+        
+        return jsonify({'success': True, 'doctors': doctors_list}), 200
+        
+    except Exception as e:
+        print(f"Get doctors error: {e}")
+        return jsonify({'success': False, 'message': 'Failed to fetch doctors'}), 500
+
+@app.route('/api/doctor/<int:doctor_id>', methods=['GET'])
+@login_required
+def api_get_doctor(doctor_id):
+    """API endpoint to get single doctor details"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, name, specialty, qualification, experience, phone, email,
+                   consultation_fee, available_days, available_time, hospital, 
+                   rating, total_patients, image_url, bio
+            FROM doctors
+            WHERE id = ?
+        ''', (doctor_id,))
+        
+        doctor = cursor.fetchone()
+        conn.close()
+        
+        if not doctor:
+            return jsonify({'success': False, 'message': 'Doctor not found'}), 404
+        
+        doctor_data = {
+            'id': doctor[0],
+            'name': doctor[1],
+            'specialty': doctor[2],
+            'qualification': doctor[3],
+            'experience': doctor[4],
+            'phone': doctor[5],
+            'email': doctor[6],
+            'consultation_fee': doctor[7],
+            'available_days': doctor[8],
+            'available_time': doctor[9],
+            'hospital': doctor[10],
+            'rating': doctor[11],
+            'total_patients': doctor[12],
+            'image_url': doctor[13],
+            'bio': doctor[14]
+        }
+        
+        return jsonify({'success': True, 'doctor': doctor_data}), 200
+        
+    except Exception as e:
+        print(f"Get doctor error: {e}")
+        return jsonify({'success': False, 'message': 'Failed to fetch doctor'}), 500
+
 @app.route('/api/appointments', methods=['POST'])
 def api_book_appointment():
-    """API endpoint to book appointment"""
+    """ENHANCED API endpoint to book appointment with real doctor"""
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Not logged in'}), 401
     
     try:
         data = request.get_json()
+        doctor_id = data.get('doctor_id')
         doctor_name = data.get('doctor_name', '').strip()
         specialty = data.get('specialty', '').strip()
         appointment_date = data.get('appointment_date', '').strip()
@@ -1631,21 +1883,111 @@ def api_book_appointment():
         if not all([doctor_name, specialty, appointment_date, appointment_time]):
             return jsonify({'success': False, 'message': 'All fields are required'}), 400
         
-        # Insert appointment
+        # Check if slot is already booked
         conn = get_db()
         cursor = conn.cursor()
+        
+        if doctor_id:
+            cursor.execute('''
+                SELECT COUNT(*) FROM appointments
+                WHERE doctor_name = ? AND appointment_date = ? AND appointment_time = ?
+            ''', (doctor_name, appointment_date, appointment_time))
+            
+            if cursor.fetchone()[0] > 0:
+                conn.close()
+                return jsonify({'success': False, 'message': 'This slot is already booked. Please choose another time.'}), 400
+        
+        # Insert appointment
         cursor.execute('''
-            INSERT INTO appointments (user_id, doctor_name, specialty, appointment_date, appointment_time, symptoms)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO appointments (user_id, doctor_name, specialty, appointment_date, appointment_time, symptoms, status)
+            VALUES (?, ?, ?, ?, ?, ?, 'confirmed')
         ''', (session['user_id'], doctor_name, specialty, appointment_date, appointment_time, symptoms))
+        
+        appointment_id = cursor.lastrowid
+        
+        # Create notification for user
+        cursor.execute('''
+            INSERT INTO notifications (user_id, title, message, type)
+            VALUES (?, ?, ?, ?)
+        ''', (session['user_id'], 
+              'Appointment Confirmed! 🎉',
+              f'Your appointment with {doctor_name} ({specialty}) is confirmed for {appointment_date} at {appointment_time}. Please arrive 10 minutes early.',
+              'success'))
+        
+        # Update doctor's patient count if doctor_id provided
+        if doctor_id:
+            cursor.execute('UPDATE doctors SET total_patients = total_patients + 1 WHERE id = ?', (doctor_id,))
+        
         conn.commit()
         conn.close()
         
-        return jsonify({'success': True, 'message': 'Appointment booked successfully!'}), 200
+        return jsonify({
+            'success': True, 
+            'message': 'Appointment booked successfully! Check your notifications.',
+            'appointment_id': appointment_id,
+            'confirmation': f'Confirmed with {doctor_name} on {appointment_date} at {appointment_time}'
+        }), 200
         
     except Exception as e:
         print(f"Appointment booking error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': 'Booking failed'}), 500
+
+@app.route('/api/notifications', methods=['GET'])
+@login_required
+def api_get_notifications():
+    """API endpoint to get user notifications"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, title, message, type, is_read, created_at
+            FROM notifications
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 20
+        ''', (session['user_id'],))
+        
+        notifications = cursor.fetchall()
+        conn.close()
+        
+        notifications_list = []
+        for notif in notifications:
+            notifications_list.append({
+                'id': notif[0],
+                'title': notif[1],
+                'message': notif[2],
+                'type': notif[3],
+                'is_read': notif[4],
+                'created_at': notif[5]
+            })
+        
+        return jsonify({'success': True, 'notifications': notifications_list}), 200
+        
+    except Exception as e:
+        print(f"Get notifications error: {e}")
+        return jsonify({'success': False, 'message': 'Failed to fetch notifications'}), 500
+
+@app.route('/api/notifications/<int:notif_id>/read', methods=['POST'])
+@login_required
+def api_mark_notification_read(notif_id):
+    """Mark notification as read"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE notifications
+            SET is_read = 1
+            WHERE id = ? AND user_id = ?
+        ''', (notif_id, session['user_id']))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        print(f"Mark read error: {e}")
+        return jsonify({'success': False}), 500
 
 # ==================== ADMIN ROUTES ====================
 
