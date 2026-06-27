@@ -1,14 +1,12 @@
 """
-AI Healthcare Chatbot - Main Application
-Streamlit-based web interface for the healthcare chatbot
+AI Healthcare Chatbot - Home Page
+Welcome page with navigation to Login/Admin/Patient portals
 """
 
 import streamlit as st
-from datetime import datetime, timedelta, date
-import uuid
 from database import db
-from chatbot_engine import chatbot
 import config
+import auth
 
 
 # Page configuration
@@ -16,375 +14,261 @@ st.set_page_config(
     page_title=config.APP_TITLE,
     page_icon=config.APP_ICON,
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for better UI
+# Initialize session state
+auth.init_session_state()
+
+# Custom CSS for beautiful home page
 st.markdown("""
     <style>
     .main-header {
-        font-size: 2.5rem;
+        font-size: 4rem;
         color: #1f77b4;
         text-align: center;
-        margin-bottom: 1rem;
+        margin: 2rem 0;
+        font-weight: bold;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
-    .chat-message {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
+    .subtitle {
+        font-size: 1.5rem;
+        text-align: center;
+        color: #666;
+        margin-bottom: 3rem;
     }
-    .user-message {
-        background-color: #e3f2fd;
-        border-left: 4px solid #2196f3;
-    }
-    .bot-message {
-        background-color: #f5f5f5;
-        border-left: 4px solid #4caf50;
-    }
-    .info-box {
-        background-color: #fff3cd;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #ffc107;
-        margin: 1rem 0;
-    }
-    .success-box {
-        background-color: #d4edda;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #28a745;
-        margin: 1rem 0;
-    }
-    .stButton>button {
-        width: 100%;
-        background-color: #1f77b4;
+    .feature-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 1rem;
         color: white;
+        text-align: center;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s;
+        height: 100%;
+    }
+    .feature-card:hover {
+        transform: translateY(-10px);
+    }
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    .feature-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .cta-button {
+        background: linear-gradient(90deg, #1f77b4, #2196f3);
+        color: white;
+        padding: 1rem 3rem;
+        border-radius: 2rem;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .stats-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1f77b4;
+    }
+    .stat-label {
+        font-size: 1rem;
+        color: #666;
     }
     </style>
 """, unsafe_allow_html=True)
 
 
-# Initialize session state
-if "session_id" not in st.session_state:
-    st.session_state.session_id = str(uuid.uuid4())
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "current_patient" not in st.session_state:
-    st.session_state.current_patient = None
-
-
 def main():
-    """Main application function"""
+    """Main home page"""
     
-    # Header
+    # Check if already logged in - redirect to appropriate page
+    if auth.is_authenticated():
+        user = auth.get_current_user()
+        if user['role'] == 'admin':
+            st.switch_page("pages/2_🎛️_Admin_Dashboard.py")
+        else:
+            st.switch_page("pages/3_🏥_Patient_Portal.py")
+        st.stop()
+    
+    # Hero Section
     st.markdown(f'<h1 class="main-header">{config.APP_ICON} {config.APP_TITLE}</h1>', 
                 unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">Your 24/7 AI-Powered Healthcare Assistant</p>', 
+                unsafe_allow_html=True)
     
-    # Sidebar
-    with st.sidebar:
-        st.header("🏥 Menu")
-        
-        # Patient Login/Registration
-        st.subheader("👤 Patient Login")
-        phone_number = st.text_input("Enter your phone number:", 
-                                     placeholder="+1234567890",
-                                     help="Used for identifying your records")
-        
-        if st.button("🔍 Login"):
-            if phone_number:
-                patient = db.get_patient_by_phone(phone_number)
-                if patient:
-                    st.session_state.current_patient = patient
-                    st.success(f"✓ Welcome back, {patient['name']}!")
-                else:
-                    st.warning("❌ Patient not found. Please register below.")
-            else:
-                st.error("Please enter a phone number")
-        
-        # Display current patient info
-        if st.session_state.current_patient:
-            st.info(f"**Logged in as:** {st.session_state.current_patient['name']}")
-            if st.button("🚪 Logout"):
-                st.session_state.current_patient = None
-                st.rerun()
-        
-        st.divider()
-        
-        # Patient Registration
-        with st.expander("📝 New Patient Registration"):
-            register_patient()
-        
-        st.divider()
-        
-        # Appointment Booking
-        with st.expander("📅 Book Appointment"):
-            book_appointment()
-        
-        st.divider()
-        
-        # View Appointments
-        with st.expander("📋 View My Appointments"):
-            view_appointments()
-        
-        st.divider()
-        
-        # Database Statistics
-        with st.expander("📊 System Statistics"):
-            show_statistics()
-    
-    # Main chat interface
-    st.header("💬 Chat with HealthBot")
-    
-    # Display disclaimer
-    with st.expander("⚠️ Medical Disclaimer", expanded=False):
-        st.warning(config.MEDICAL_DISCLAIMER)
-    
-    # Chat container
-    chat_container = st.container()
-    
-    with chat_container:
-        # Display chat history
-        for message in st.session_state.chat_history:
-            if message["role"] == "user":
-                st.markdown(f'<div class="chat-message user-message">👤 **You:** {message["content"]}</div>', 
-                           unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="chat-message bot-message">🤖 **{config.BOT_NAME}:** {message["content"]}</div>', 
-                           unsafe_allow_html=True)
-    
-    # Chat input
-    st.divider()
-    col1, col2 = st.columns([5, 1])
-    
-    with col1:
-        user_input = st.text_input("Type your message here:", 
-                                   placeholder="e.g., I have a headache and fever",
-                                   label_visibility="collapsed",
-                                   key="user_input")
-    
+    # Call to Action
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        send_button = st.button("📤 Send", use_container_width=True)
+        st.markdown("### 🚀 Get Started")
+        col_a, col_b = st.columns(2)
+        with col_a:
+            if st.button("🔐 Login", use_container_width=True, type="primary"):
+                st.switch_page("pages/1_🔐_Login.py")
+        with col_b:
+            if st.button("📝 Register", use_container_width=True):
+                st.session_state.show_register = True
+                st.switch_page("pages/1_🔐_Login.py")
     
-    # Process user input
-    if send_button and user_input:
-        # Add user message to history
-        st.session_state.chat_history.append({
-            "role": "user",
-            "content": user_input,
-            "timestamp": datetime.now()
-        })
-        
-        # Save to database
-        patient_id = st.session_state.current_patient['patient_id'] if st.session_state.current_patient else None
-        db.save_chat_message(st.session_state.session_id, "user", user_input, patient_id)
-        
-        # Get bot response
-        session_context = {
-            "current_patient": st.session_state.current_patient
-        }
-        response, intent = chatbot.process_message(user_input, session_context)
-        
-        # Add bot response to history
-        st.session_state.chat_history.append({
-            "role": "bot",
-            "content": response,
-            "timestamp": datetime.now(),
-            "intent": intent
-        })
-        
-        # Save to database
-        db.save_chat_message(st.session_state.session_id, "bot", response, patient_id)
-        
-        # Log symptoms if symptom check
-        if intent == "symptom_check":
-            symptoms = chatbot._extract_symptoms(user_input)
-            if symptoms:
-                severity = chatbot._assess_severity(symptoms)
-                possible_conditions = chatbot._analyze_symptoms(symptoms)
-                advice = chatbot._generate_advice(symptoms, severity)
-                db.log_symptoms(', '.join(symptoms), severity, possible_conditions, advice, patient_id)
-        
-        st.rerun()
-    
-    # Quick action buttons
     st.divider()
-    st.subheader("⚡ Quick Actions")
+    
+    # Features Section
+    st.markdown("### 🌟 Features")
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        if st.button("🩺 Check Symptoms"):
-            auto_message("I want to check my symptoms")
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🩺</div>
+            <div class="feature-title">Symptom Checker</div>
+            <p>AI-powered analysis with severity assessment and health advice</p>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col2:
-        if st.button("📅 Book Appointment"):
-            auto_message("I want to book an appointment")
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">📅</div>
+            <div class="feature-title">Appointments</div>
+            <p>Easy booking with 10+ medical specialties</p>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col3:
-        if st.button("📚 Health Info"):
-            auto_message("Give me health information")
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">💬</div>
+            <div class="feature-title">AI Chatbot</div>
+            <p>Intelligent assistant available 24/7 for health queries</p>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col4:
-        if st.button("❓ Help"):
-            auto_message("Help me")
-
-
-def auto_message(message: str):
-    """Automatically send a message"""
-    st.session_state.chat_history.append({
-        "role": "user",
-        "content": message,
-        "timestamp": datetime.now()
-    })
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🎛️</div>
+            <div class="feature-title">Admin Panel</div>
+            <p>Complete management dashboard for healthcare providers</p>
+        </div>
+        """, unsafe_allow_html=True)
     
-    patient_id = st.session_state.current_patient['patient_id'] if st.session_state.current_patient else None
-    db.save_chat_message(st.session_state.session_id, "user", message, patient_id)
+    st.divider()
     
-    response, intent = chatbot.process_message(message)
-    
-    st.session_state.chat_history.append({
-        "role": "bot",
-        "content": response,
-        "timestamp": datetime.now(),
-        "intent": intent
-    })
-    
-    db.save_chat_message(st.session_state.session_id, "bot", response, patient_id)
-    st.rerun()
-
-
-def register_patient():
-    """Patient registration form"""
-    st.write("Fill in your details to register:")
-    
-    with st.form("registration_form"):
-        name = st.text_input("Full Name *", placeholder="John Doe")
-        col1, col2 = st.columns(2)
-        with col1:
-            age = st.number_input("Age *", min_value=1, max_value=120, value=30)
-        with col2:
-            gender = st.selectbox("Gender *", ["Male", "Female", "Other"])
-        
-        phone = st.text_input("Phone Number *", placeholder="+1234567890")
-        email = st.text_input("Email", placeholder="john@example.com")
-        address = st.text_area("Address", placeholder="123 Main St, City, State")
-        
-        col3, col4 = st.columns(2)
-        with col3:
-            blood_group = st.selectbox("Blood Group", 
-                                       ["", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
-        with col4:
-            allergies = st.text_input("Allergies", placeholder="Penicillin, Peanuts")
-        
-        chronic_conditions = st.text_area("Chronic Conditions", 
-                                         placeholder="Diabetes, Hypertension")
-        
-        submit = st.form_submit_button("📝 Register")
-        
-        if submit:
-            if name and phone and age:
-                patient_id = db.add_patient(name, age, gender, phone, email, 
-                                           address, blood_group, allergies, chronic_conditions)
-                if patient_id:
-                    st.success(f"✓ Successfully registered! Patient ID: {patient_id}")
-                    patient = db.get_patient_by_phone(phone)
-                    st.session_state.current_patient = patient
-                    st.balloons()
-                else:
-                    st.error("❌ Registration failed. Phone number may already exist.")
-            else:
-                st.error("❌ Please fill in all required fields (*)")
-
-
-def book_appointment():
-    """Appointment booking form"""
-    if not st.session_state.current_patient:
-        st.warning("⚠️ Please login first to book an appointment")
-        return
-    
-    patient = st.session_state.current_patient
-    
-    st.write(f"Booking for: **{patient['name']}**")
-    
-    with st.form("appointment_form"):
-        specialty = st.selectbox("Medical Specialty *", config.MEDICAL_SPECIALTIES)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            appointment_date = st.date_input("Appointment Date *",
-                                            min_value=date.today(),
-                                            max_value=date.today() + timedelta(days=90))
-        with col2:
-            appointment_time = st.selectbox("Appointment Time *", config.TIME_SLOTS)
-        
-        symptoms = st.text_area("Describe your symptoms", 
-                               placeholder="e.g., Chest pain and difficulty breathing")
-        
-        submit = st.form_submit_button("📅 Book Appointment")
-        
-        if submit:
-            # Check availability
-            if db.check_appointment_availability(str(appointment_date), appointment_time):
-                appointment_id = db.book_appointment(
-                    patient['patient_id'],
-                    patient['name'],
-                    specialty,
-                    str(appointment_date),
-                    appointment_time,
-                    symptoms
-                )
-                
-                if appointment_id:
-                    st.success(f"""
-                    ✓ **Appointment Booked Successfully!**
-                    
-                    **Appointment ID:** {appointment_id}
-                    **Date:** {appointment_date}
-                    **Time:** {appointment_time}
-                    **Specialty:** {specialty}
-                    
-                    You will receive a confirmation shortly.
-                    """)
-                    st.balloons()
-                else:
-                    st.error("❌ Failed to book appointment. Please try again.")
-            else:
-                st.error("❌ This time slot is fully booked. Please choose another time.")
-
-
-def view_appointments():
-    """View patient appointments"""
-    if not st.session_state.current_patient:
-        st.warning("⚠️ Please login first to view your appointments")
-        return
-    
-    patient = st.session_state.current_patient
-    appointments = db.get_patient_appointments(patient['patient_id'])
-    
-    if appointments:
-        st.write(f"**Appointments for {patient['name']}:**")
-        
-        for apt in appointments:
-            status_emoji = "✅" if apt['status'] == "Scheduled" else "❌"
-            st.markdown(f"""
-            {status_emoji} **{apt['specialty']}**
-            - **Date:** {apt['date']} at {apt['time']}
-            - **Status:** {apt['status']}
-            - **Symptoms:** {apt['symptoms'] or 'N/A'}
-            ---
-            """)
-    else:
-        st.info("📋 No appointments found")
-
-
-def show_statistics():
-    """Display system statistics"""
+    # Statistics Section
     stats = db.get_statistics()
+    st.markdown("### 📊 Platform Statistics")
+    col1, col2, col3, col4 = st.columns(4)
     
-    st.metric("Total Patients", stats.get('total_patients', 0))
-    st.metric("Total Appointments", stats.get('total_appointments', 0))
-    st.metric("Scheduled Appointments", stats.get('scheduled_appointments', 0))
-    st.metric("Symptom Checks", stats.get('total_symptom_checks', 0))
+    with col1:
+        st.markdown(f"""
+        <div class="stats-card">
+            <div class="stat-number">{stats.get('total_patients', 0)}</div>
+            <div class="stat-label">Registered Patients</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f"""
+        <div class="stats-card">
+            <div class="stat-number">{stats.get('total_appointments', 0)}</div>
+            <div class="stat-label">Appointments Booked</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown(f"""
+        <div class="stats-card">
+            <div class="stat-number">{stats.get('total_symptom_checks', 0)}</div>
+            <div class="stat-label">Symptom Checks</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown(f"""
+        <div class="stats-card">
+            <div class="stat-number">{stats.get('active_users', 0)}</div>
+            <div class="stat-label">Active Users</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # How It Works
+    st.markdown("### 📖 How It Works")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        #### 1️⃣ Register/Login
+        Create your account in seconds. Secure authentication with role-based access.
+        """)
+    
+    with col2:
+        st.markdown("""
+        #### 2️⃣ Chat with AI
+        Describe your symptoms or health concerns to our intelligent chatbot.
+        """)
+    
+    with col3:
+        st.markdown("""
+        #### 3️⃣ Get Help
+        Receive instant analysis, book appointments, and access health information.
+        """)
+    
+    st.divider()
+    
+    # Medical Specialties
+    st.markdown("### 🏥 Available Medical Specialties")
+    cols = st.columns(5)
+    specialties_with_icons = [
+        ("🩺", "General Medicine"),
+        ("❤️", "Cardiology"),
+        ("🧴", "Dermatology"),
+        ("👶", "Pediatrics"),
+        ("🦴", "Orthopedics"),
+        ("🧠", "Neurology"),
+        ("👂", "ENT"),
+        ("👁️", "Ophthalmology"),
+        ("🧘", "Psychiatry"),
+        ("👩", "Gynecology")
+    ]
+    
+    for idx, (icon, specialty) in enumerate(specialties_with_icons):
+        with cols[idx % 5]:
+            st.markdown(f"**{icon} {specialty}**")
+    
+    st.divider()
+    
+    # Disclaimer
+    with st.expander("⚠️ Important Medical Disclaimer"):
+        st.warning(config.MEDICAL_DISCLAIMER)
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; color: #666;">
+        <p><strong>AI Healthcare Chatbot</strong> | Powered by Advanced AI Technology</p>
+        <p>For emergencies, call 911 immediately | Available 24/7</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 
+# Old functions removed - now handled in separate pages
 if __name__ == "__main__":
     main()
+
+

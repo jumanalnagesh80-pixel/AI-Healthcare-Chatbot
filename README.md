@@ -1,8 +1,14 @@
 # 🏥 AI Healthcare Chatbot
 
-A comprehensive, real-time AI-powered healthcare chatbot built with Python and SQLite. This application provides symptom checking, appointment booking, patient management, and general health information through an intuitive web interface.
+A comprehensive, real-time AI-powered healthcare chatbot with **Admin Panel**, **User Authentication**, and **Role-Based Access Control**. Built with Python, SQLite, and Streamlit, featuring a modern, intuitive web interface for both patients and healthcare administrators.
 
 ## 🌟 Features
+
+### 🔐 **Authentication & Security**
+- Secure login system with password hashing (SHA-256)
+- Role-based access control (Admin & Patient roles)
+- Session management and user authentication
+- Default admin account for quick setup
 
 ### 1. **Intelligent Symptom Checking** 🩺
 - Natural language symptom analysis
@@ -37,6 +43,19 @@ A comprehensive, real-time AI-powered healthcare chatbot built with Python and S
 - General health advice
 - Emergency hotline numbers
 
+### 6. **Admin Dashboard** 🎛️
+- **Complete Patient Management** - View, search, and manage patient records
+- **Appointment Management** - Update appointment status, manage bookings
+- **User Management** - Create users, activate/deactivate accounts
+- **Real-time Statistics** - Dashboard with key metrics and insights
+- **Analytics** - Track patients, appointments, and system usage
+
+### 7. **Multi-Page Navigation** 📄
+- **Home Page** - Landing page with features overview
+- **Login Page** - Secure authentication portal
+- **Admin Dashboard** - Complete admin panel with analytics
+- **Patient Portal** - Interactive chatbot and patient services
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -64,19 +83,27 @@ streamlit run app.py
 4. **Open your browser:**
 The application will automatically open at `http://localhost:8501`
 
+## 🔑 Default Credentials
+
+### Admin Account
+- **Username:** `admin`
+- **Password:** `admin123`
+
+### Patient Account
+- Create your own account using the registration form on the login page
+
 ## 📋 Usage Guide
 
-### For New Users
+### For Patients
 
-1. **Register as a Patient:**
-   - Open the sidebar
-   - Click on "New Patient Registration"
-   - Fill in your details (name, age, phone, etc.)
-   - Click "Register"
+1. **Register/Login:**
+   - Visit the Login page
+   - Create a new account or login with existing credentials
+   - You'll be redirected to the Patient Portal
 
-2. **Login:**
-   - Enter your phone number in the "Patient Login" section
-   - Click "Login"
+2. **Create Patient Profile:**
+   - Link your account to a patient profile using your phone number
+   - Or create a new patient profile with your medical information
 
 3. **Check Symptoms:**
    - Type your symptoms in the chat (e.g., "I have a headache and fever")
@@ -92,6 +119,33 @@ The application will automatically open at `http://localhost:8501`
    - Click "View My Appointments" in the sidebar
    - See all your scheduled appointments
 
+### For Administrators
+
+1. **Login as Admin:**
+   - Use admin credentials on the Login page
+   - You'll be redirected to the Admin Dashboard
+
+2. **Manage Patients:**
+   - View all registered patients
+   - Search and filter patient records
+   - Delete patient records if needed
+
+3. **Manage Appointments:**
+   - View all appointments across the system
+   - Update appointment status (Scheduled/Completed/Cancelled)
+   - Filter by status and date
+   - Delete appointments
+
+4. **Manage Users:**
+   - Create new user accounts (admin or patient)
+   - Activate/deactivate user accounts
+   - View user statistics and activity
+
+5. **View Analytics:**
+   - Dashboard with real-time statistics
+   - Track system usage and patient activity
+   - Monitor appointments and health checks
+
 ### Quick Actions
 
 Use the quick action buttons for common tasks:
@@ -104,8 +158,15 @@ Use the quick action buttons for common tasks:
 
 The application uses SQLite with the following tables:
 
+### Users Table
+- user_id (Primary Key)
+- username, password_hash, email
+- role (admin/patient), full_name
+- is_active, created_at, last_login
+
 ### Patients Table
 - patient_id (Primary Key)
+- user_id (Foreign Key to users)
 - name, age, gender, phone
 - email, address, blood_group
 - allergies, chronic_conditions
@@ -135,13 +196,18 @@ The application uses SQLite with the following tables:
 
 ```
 AI-Healthcare-Chatbot/
-├── app.py                  # Main Streamlit application
-├── chatbot_engine.py       # NLP and chatbot logic
-├── database.py             # SQLite database operations
-├── config.py               # Configuration settings
-├── requirements.txt        # Python dependencies
-├── README.md              # Documentation
-└── healthcare_chatbot.db  # SQLite database (auto-created)
+├── app.py                      # Home page / Landing page
+├── auth.py                     # Authentication module
+├── chatbot_engine.py           # NLP and chatbot logic
+├── database.py                 # SQLite database operations
+├── config.py                   # Configuration settings
+├── requirements.txt            # Python dependencies
+├── pages/                      # Multi-page application
+│   ├── 1_🔐_Login.py          # Login & Registration page
+│   ├── 2_🎛️_Admin_Dashboard.py # Admin dashboard
+│   └── 3_🏥_Patient_Portal.py # Patient chatbot interface
+├── README.md                   # Documentation
+└── healthcare_chatbot.db       # SQLite database (auto-created)
 ```
 
 ## 🔧 Configuration
@@ -153,6 +219,15 @@ Edit `config.py` to customize:
 - Symptom database
 - Emergency keywords
 - Application settings
+
+## 🎨 UI/UX Features
+
+- **Modern Gradient Design** - Beautiful gradient cards and buttons
+- **Responsive Layout** - Works on all screen sizes
+- **Smooth Animations** - Fade-in effects and hover transitions
+- **Intuitive Navigation** - Easy-to-use multi-page interface
+- **Real-time Updates** - Live statistics and data refresh
+- **Professional Styling** - Clean, medical-themed color scheme
 
 ## 💡 Example Conversations
 
