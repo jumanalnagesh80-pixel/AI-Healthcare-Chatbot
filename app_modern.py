@@ -406,6 +406,20 @@ def api_register():
         if not all([email, password, full_name]):
             return jsonify({'error': 'Missing required fields'}), 400
         
+        # Generate username from email (required by database)
+        username = email.split('@')[0]
+        
+        # Check if username exists
+        existing_username = query_db('SELECT id FROM users WHERE username = ?', [username], one=True)
+        if existing_username:
+            # Make username unique by adding number
+            counter = 1
+            while existing_username:
+                new_username = f"{username}{counter}"
+                existing_username = query_db('SELECT id FROM users WHERE username = ?', [new_username], one=True)
+                counter += 1
+            username = new_username
+        
         # Check if user exists
         existing = query_db('SELECT id FROM users WHERE email = ?', [email], one=True)
         if existing:
@@ -414,16 +428,17 @@ def api_register():
         # Hash password
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         
-        # Create user
+        # Create user - NOW INCLUDING USERNAME
         user_id = execute_db(
-            'INSERT INTO users (email, password_hash, full_name, role, created_at) VALUES (?, ?, ?, ?, ?)',
-            [email, password_hash, full_name, 'patient', datetime.now()]
+            'INSERT INTO users (username, email, password_hash, full_name, role, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            [username, email, password_hash, full_name, 'patient', datetime.now()]
         )
         
         return jsonify({
             'success': True,
             'message': 'Account created successfully',
-            'user_id': user_id
+            'user_id': user_id,
+            'username': username
         }), 201
     
     except Exception as e:
